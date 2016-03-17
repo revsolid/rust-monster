@@ -24,8 +24,7 @@ mod tests
                                                        flags : ga::DEBUG_FLAG,
                                                        max_generations: 100,
                                                        ..Default::default()
-                                                     }
-        );
+                                                     });
         ga.initialize();
         assert_eq!(ga.step(), 1);
         assert_eq!(ga.done(), false);
