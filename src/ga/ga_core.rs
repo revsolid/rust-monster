@@ -31,6 +31,16 @@ pub trait GASolution
 }
 
 
+// Genetic Algorithm Solution Factory
+pub trait GAFactory<T: GASolution>
+{
+    fn initial_population(&mut self) -> Vec<T> {
+        let v: Vec<T> = vec![];
+        v
+    }
+}
+
+
 // Genetic Algorithm
 pub trait GeneticAlgorithm<T: GASolution>
 {

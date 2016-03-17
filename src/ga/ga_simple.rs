@@ -1,4 +1,10 @@
-use super::ga_core::{GAFlags, GAConfig, GeneticAlgorithm, GASolution};
+use super::ga_core::{GAConfig, GAFactory, GAFlags, GeneticAlgorithm, GASolution};
+
+/// Simple Genetic Algorithm 
+///
+/// A basic implementation of a Genetic Algorithm
+/// TODO: Based on ?, GALib Ref
+///
 
 // Simple Genetic Algorithm Config
 #[derive(Copy, Clone, Default, Debug)]
@@ -28,7 +34,6 @@ impl GAConfig for SimpleGeneticAlgorithmCfg
     fn probability_mutation(&self) -> f32 { 0.0 }
 }
 
-
 // Simple Genetic Algorithm
 pub struct SimpleGeneticAlgorithm<T: GASolution>
 {
@@ -38,11 +43,29 @@ pub struct SimpleGeneticAlgorithm<T: GASolution>
 }
 impl<T: GASolution> SimpleGeneticAlgorithm<T>
 {
-    pub fn new(cfg_:SimpleGeneticAlgorithmCfg) -> SimpleGeneticAlgorithm<T>
+    pub fn new(cfg: SimpleGeneticAlgorithmCfg,
+               factory: Option<GAFactory<T>>,
+               population: Option<Vec<T>>) -> SimpleGeneticAlgorithm<T>
     {
-        //TODO: Initialize population. Maybe that's for initialize_internal (?)
-        let p : Vec<T> = vec![]; 
-        SimpleGeneticAlgorithm { current_generation: 0, config : cfg_, population : p}
+        let p : Vec<T>;
+        match factory {
+            Some(ref f) => {
+                p = f.initial_population();
+            },
+            None => {
+                match population {
+                    Some(p_) => {
+                        p = p_;
+                    },
+                    None => {
+                        panic!("Simple Genetic Algorithm - either factory or population need to be provided");
+                    }
+                }
+            }
+        }
+
+
+        SimpleGeneticAlgorithm { current_generation: 0, config : cfg, population : p}
     }
 }
 impl<T: GASolution> GeneticAlgorithm<T> for SimpleGeneticAlgorithm <T>
