@@ -28,6 +28,7 @@ pub trait GASolution
     fn evaluate(&mut self) -> f32;
     fn crossover(&self, other : &Self) -> &Self;
     fn mutate(&mut self);
+    fn fitness(&self) -> f32;
 }
 
 

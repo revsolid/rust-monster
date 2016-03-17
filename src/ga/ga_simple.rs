@@ -44,12 +44,12 @@ pub struct SimpleGeneticAlgorithm<T: GASolution>
 impl<T: GASolution> SimpleGeneticAlgorithm<T>
 {
     pub fn new(cfg: SimpleGeneticAlgorithmCfg,
-               factory: Option<GAFactory<T>>,
+               factory: Option<&mut GAFactory<T>>,
                population: Option<Vec<T>>) -> SimpleGeneticAlgorithm<T>
     {
         let p : Vec<T>;
         match factory {
-            Some(ref f) => {
+            Some(f) => {
                 p = f.initial_population();
             },
             None => {
