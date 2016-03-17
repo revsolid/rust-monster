@@ -38,18 +38,18 @@ pub trait GeneticAlgorithm<T: GASolution>
     fn initialize(&mut self)
     {
         if self.config().flags().contains(DEBUG_FLAG)
-		{
-		    println!("Genetic Algorithm - Initialized");
-		}
+        {
+            println!("Genetic Algorithm - Initialized");
+        }
         self.initialize_internal()
     }
 
     fn step(&mut self) -> i32
     { 
         if self.config().flags().contains(DEBUG_FLAG)
-		{
-		    println!("Genetic Algorithm - Step");
-		}
+        {
+            println!("Genetic Algorithm - Step");
+        }
         self.step_internal()
     }
 
@@ -57,7 +57,7 @@ pub trait GeneticAlgorithm<T: GASolution>
     {
         if self.config().flags().contains(DEBUG_FLAG)
         {
-          println!("Genetic Algorithm - Done");
+            println!("Genetic Algorithm - Done");
         }
         self.done_internal()
     }
