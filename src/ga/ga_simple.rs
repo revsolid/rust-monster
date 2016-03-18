@@ -64,7 +64,6 @@ impl<T: GASolution> SimpleGeneticAlgorithm<T>
             }
         }
 
-
         SimpleGeneticAlgorithm { current_generation: 0, config : cfg, population : p}
     }
 }
