@@ -1,3 +1,6 @@
+// TODO: COPYRIGHT, USE & AUTHORS
+// TODO: RUST DOCS!
+
 extern crate rust_monster;
 #[cfg(test)]
 mod tests
@@ -91,5 +94,24 @@ mod tests
                                                  None 
                                                  );
         // Not reached
+    }
+
+    #[test]
+    #[should_panic]
+    fn init_test_empty_initial_pop()
+    {
+        let empty_initial_population : Vec<TestSolution> = vec![];
+        let mut ga : ga::SimpleGeneticAlgorithm<TestSolution> =
+                     ga::SimpleGeneticAlgorithm::new(ga::SimpleGeneticAlgorithmCfg {
+                                                       d_seed : 1,
+                                                       flags : ga::DEBUG_FLAG,
+                                                       max_generations: 100,
+                                                       ..Default::default()
+                                                     },
+                                                     None,
+                                                     Some(empty_initial_population) 
+                                                     );
+        ga.initialize()
+        //Not reached 
     }
 }
