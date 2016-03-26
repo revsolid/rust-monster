@@ -1,4 +1,7 @@
+// TODO: COPYRIGHT, USE & AUTHORS
+
 // Bit Flags for Genetic Algorithm Configuration 
+// TODO: RUST DOCS!
 bitflags!
 {
     pub flags GAFlags: u32
@@ -13,6 +16,7 @@ impl Default for GAFlags
 
 
 // Genetic Algorithm Configuration
+// TODO: RUST DOCS!
 pub trait GAConfig
 {
     fn flags(&self) -> GAFlags;
@@ -23,15 +27,30 @@ pub trait GAConfig
 
 
 // Genetic Algorithm Solution
+// TODO: RUST DOCS!
 pub trait GASolution
 {
     fn evaluate(&mut self) -> f32;
     fn crossover(&self, other : &Self) -> &Self;
     fn mutate(&mut self);
+    fn fitness(&self) -> f32;
+}
+
+
+// Genetic Algorithm Solution Factory
+// TODO: RUST DOCS!
+pub trait GAFactory<T: GASolution>
+{
+    fn initial_population(&mut self) -> Vec<T>
+    {
+        let v: Vec<T> = vec![];
+        v
+    }
 }
 
 
 // Genetic Algorithm
+// TODO: RUST DOCS!
 pub trait GeneticAlgorithm<T: GASolution>
 {
     // GENERIC GA METHODS - Should not be overriden frequently
@@ -50,6 +69,7 @@ pub trait GeneticAlgorithm<T: GASolution>
         {
             println!("Genetic Algorithm - Step");
         }
+
         self.step_internal()
     }
 
@@ -64,6 +84,7 @@ pub trait GeneticAlgorithm<T: GASolution>
 
     // IMPLEMENTATION SPECIFIC
     fn config(&mut self) -> &GAConfig;
+
     fn population(&mut self) -> &Vec<T>;
 
     fn initialize_internal(&mut self) {}

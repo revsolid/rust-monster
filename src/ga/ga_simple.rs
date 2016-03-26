@@ -1,7 +1,15 @@
-use super::ga_core::{GAFlags, GAConfig, GeneticAlgorithm, GASolution};
+// TODO: COPYRIGHT, USE & AUTHORS
+use super::ga_core::{GAConfig, GAFactory, GAFlags, GeneticAlgorithm, GASolution};
+
+/// Simple Genetic Algorithm 
+///
+/// A basic implementation of a Genetic Algorithm
+/// TODO: Based on ?, GALib Ref, Basic Qualities
+///
 
 // Simple Genetic Algorithm Config
 #[derive(Copy, Clone, Default, Debug)]
+// TODO: RUST DOCS! 
 pub struct SimpleGeneticAlgorithmCfg
 {
     pub d_seed : i32,
@@ -24,12 +32,18 @@ impl GAConfig for SimpleGeneticAlgorithmCfg
     {
         self.max_generations
     }
-    fn percentage_crossover(&self) -> f32 { 0.0 }
-    fn probability_mutation(&self) -> f32 { 0.0 }
+    fn percentage_crossover(&self) -> f32
+    {
+        self.percentage_crossover
+    }
+    fn probability_mutation(&self) -> f32
+    {
+        self.probability_mutation 
+    }
 }
 
-
 // Simple Genetic Algorithm
+// TODO: RUST DOCS! 
 pub struct SimpleGeneticAlgorithm<T: GASolution>
 {
   current_generation : i32, 
@@ -38,11 +52,34 @@ pub struct SimpleGeneticAlgorithm<T: GASolution>
 }
 impl<T: GASolution> SimpleGeneticAlgorithm<T>
 {
-    pub fn new(cfg_:SimpleGeneticAlgorithmCfg) -> SimpleGeneticAlgorithm<T>
+    // TODO: Document this -new- pattern and others from the
+    // pattern GitHub
+    pub fn new(cfg: SimpleGeneticAlgorithmCfg,
+               factory: Option<&mut GAFactory<T>>,
+               population: Option<Vec<T>>) -> SimpleGeneticAlgorithm<T>
     {
-        //TODO: Initialize population. Maybe that's for initialize_internal (?)
-        let p : Vec<T> = vec![]; 
-        SimpleGeneticAlgorithm { current_generation: 0, config : cfg_, population : p}
+        let p : Vec<T>;
+        match factory
+        {
+            Some(f) => {
+                p = f.initial_population();
+            },
+            None => {
+                match population
+                {
+                    Some(p_) =>
+                    {
+                        p = p_;
+                    },
+                    None =>
+                    {
+                        panic!("Simple Genetic Algorithm - either factory or population need to be provided");
+                    }
+                }
+            }
+        }
+
+        SimpleGeneticAlgorithm { current_generation: 0, config : cfg, population : p}
     }
 }
 impl<T: GASolution> GeneticAlgorithm<T> for SimpleGeneticAlgorithm <T>
@@ -57,8 +94,29 @@ impl<T: GASolution> GeneticAlgorithm<T> for SimpleGeneticAlgorithm <T>
         return &self.population
     }
 
+    fn initialize_internal(&mut self)
+    {
+        assert!(self.population().len() > 0)
+    }
+
+    #[allow(unused_variables)]
     fn step_internal(&mut self) -> i32
     {
+        let survivors: i32;
+        let new_individuals: i32;
+        let new_population : Vec<T>;
+
+        //TODO: Lots of configuration dependant stuff
+        //      maybe creating a builder / factory of
+        //      delegates would be cool
+
+    //  for ( each individual in new population )
+    //  {
+    //      // TODO: Context how?
+    //      // GALib does it with a void* that gets passed around
+    //      // What is the void* of rust?
+    //      ind.evaluate();
+    //  }
         self.current_generation += 1;
         self.current_generation
     }
