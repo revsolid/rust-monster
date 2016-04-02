@@ -1,12 +1,6 @@
 // TODO: COPYRIGHT, USE & AUTHORS
 use super::ga_core::{GAConfig, GAFactory, GAFlags, GeneticAlgorithm, GASolution};
 
-/// Simple Genetic Algorithm 
-///
-/// A basic implementation of a Genetic Algorithm
-/// TODO: Based on ?, GALib Ref, Basic Qualities
-///
-
 // Simple Genetic Algorithm Config
 #[derive(Copy, Clone, Default, Debug)]
 // TODO: RUST DOCS! 
@@ -42,8 +36,12 @@ impl GAConfig for SimpleGeneticAlgorithmCfg
     }
 }
 
-// Simple Genetic Algorithm
-// TODO: RUST DOCS! 
+/// Simple Genetic Algorithm 
+///
+/// A basic implementation of a Genetic Algorithm.
+///
+/// TODO: Based on ?, GALib Ref, Basic Qualities
+///
 pub struct SimpleGeneticAlgorithm<T: GASolution>
 {
   current_generation : i32, 
@@ -102,9 +100,9 @@ impl<T: GASolution> GeneticAlgorithm<T> for SimpleGeneticAlgorithm <T>
     #[allow(unused_variables)]
     fn step_internal(&mut self) -> i32
     {
-        let survivors: i32;
-        let new_individuals: i32;
-        let new_population : Vec<T>;
+        let mut survivors: i32;
+        let mut new_individuals: i32;
+        let mut new_population : Vec<T>;
 
         //TODO: Lots of configuration dependant stuff
         //      maybe creating a builder / factory of

@@ -1,7 +1,8 @@
 // TODO: COPYRIGHT, USE & AUTHORS
 
-// Bit Flags for Genetic Algorithm Configuration 
-// TODO: RUST DOCS!
+/// Bit Flags for Genetic Algorithm Configuration 
+/// 
+///
 bitflags!
 {
     pub flags GAFlags: u32
@@ -36,6 +37,18 @@ pub trait GASolution
     fn fitness(&self) -> f32;
 }
 
+// Genetic Algorithm Population
+// TODO: RUST DOCS!
+// TODO: Move other traits to use population
+pub struct GAPopulation<T: GASolution>
+{
+    population : Vec<T>
+}
+
+impl<T: GASolution> GAPopulation<T>
+{
+}
+
 
 // Genetic Algorithm Solution Factory
 // TODO: RUST DOCS!
@@ -56,29 +69,19 @@ pub trait GeneticAlgorithm<T: GASolution>
     // GENERIC GA METHODS - Should not be overriden frequently
     fn initialize(&mut self)
     {
-        if self.config().flags().contains(DEBUG_FLAG)
-        {
-            println!("Genetic Algorithm - Initialized");
-        }
+        debug!("Genetic Algorithm - Initialized");
         self.initialize_internal()
     }
 
     fn step(&mut self) -> i32
     { 
-        if self.config().flags().contains(DEBUG_FLAG)
-        {
-            println!("Genetic Algorithm - Step");
-        }
-
+        debug!("Genetic Algorithm - Step");
         self.step_internal()
     }
 
     fn done(&mut self) -> bool
     {
-        if self.config().flags().contains(DEBUG_FLAG)
-        {
-            println!("Genetic Algorithm - Done");
-        }
+        debug!("Genetic Algorithm - Done");
         self.done_internal()
     }
 

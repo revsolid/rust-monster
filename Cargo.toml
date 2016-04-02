@@ -5,3 +5,7 @@ authors = ["El Jacko <eljacko@revolutionsolid.com>", "Ricardo Sisnett <sysnet@re
 
 [dependencies]
 bitflags = "0.5.0"
+log = "0.3.6"
+
+[dev-dependencies]
+env_logger = "0.3.2"

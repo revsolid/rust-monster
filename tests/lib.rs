@@ -2,11 +2,15 @@
 // TODO: RUST DOCS!
 
 extern crate rust_monster;
+#[macro_use]
+extern crate log;
+extern crate env_logger;
 #[cfg(test)]
 mod tests
 {
     use rust_monster::ga::{GeneticAlgorithm, GASolution};
     use rust_monster::ga;
+    use env_logger;
     const VAL : f32 = 3.14159;
     
     struct TestSolution
@@ -46,6 +50,7 @@ mod tests
     #[test]
     fn init_test_with_initial_population()
     {
+        env_logger::init();
         let initial_population = vec![TestSolution { fitness: VAL}];
 
         let mut ga : ga::SimpleGeneticAlgorithm<TestSolution> =
@@ -64,6 +69,7 @@ mod tests
     #[test]
     fn init_test_with_factory()
     {
+        env_logger::init();
         let mut factory = TestFactory { starting_fitness: VAL };
         let mut ga : ga::SimpleGeneticAlgorithm<TestSolution> =
                      ga::SimpleGeneticAlgorithm::new(ga::SimpleGeneticAlgorithmCfg {
@@ -83,6 +89,7 @@ mod tests
     #[allow(unused_variables)]
     fn init_test_missing_args()
     {
+        env_logger::init();
         let ga : ga::SimpleGeneticAlgorithm<TestSolution> =
                  ga::SimpleGeneticAlgorithm::new(ga::SimpleGeneticAlgorithmCfg {
                                                    d_seed : 1,
@@ -100,6 +107,7 @@ mod tests
     #[should_panic]
     fn init_test_empty_initial_pop()
     {
+        env_logger::init();
         let empty_initial_population : Vec<TestSolution> = vec![];
         let mut ga : ga::SimpleGeneticAlgorithm<TestSolution> =
                      ga::SimpleGeneticAlgorithm::new(ga::SimpleGeneticAlgorithmCfg {
