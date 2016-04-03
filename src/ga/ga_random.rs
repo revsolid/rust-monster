@@ -6,7 +6,8 @@
 ///
 /// Wrapper around the rand crate
 ///
-pub mod rand {
+pub mod rand
+{
     use rand::random;
     pub fn ga_random_float() -> f32
     {

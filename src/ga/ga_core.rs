@@ -31,10 +31,14 @@ pub trait GAConfig
 /// Genetic Algorithm Solution
 pub trait GASolution
 {
+    //Static
     fn new() -> Self;
-    fn evaluate(&mut self) -> f32;
+
+    // Instance
+    fn clone(&self) -> Self;
     fn crossover(&self, other : &Self) -> Self;
     fn mutate(&mut self, pMutation : f32);
+    fn evaluate(&mut self) -> f32;
     // Scaled fitness score
     fn fitness(&self) -> f32;
     // Raw objective score
@@ -73,7 +77,6 @@ pub struct GAPopulation<'a, T: 'a>
     is_scaled_sorted: bool,
 
     // GALib keeps 2 lists of solutions, one sorted by RAW and one by SCALED.
-
 }
 impl<'a, T: GASolution> GAPopulation<'a, T>
 {
@@ -116,6 +119,12 @@ impl<'a, T: GASolution> GAPopulation<'a, T>
     pub fn best(&self) -> &T
     {
         &self.population[0]
+    }
+
+    //TODO: This is a temporary implementation 
+    pub fn worst(&self) -> &T
+    {
+        &self.population[self.population.len()-1]
     }
 
     pub fn sort(&mut self, force_sort: bool, sort_basis: GAPopulationSortBasis)
