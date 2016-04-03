@@ -8,7 +8,7 @@ extern crate env_logger;
 #[cfg(test)]
 mod tests
 {
-    use rust_monster::ga::{GeneticAlgorithm, GASolution};
+    use rust_monster::ga::{GeneticAlgorithm, GASolution, GAPopulation};
     use rust_monster::ga;
     use env_logger;
     const VAL : f32 = 3.14159;
@@ -19,10 +19,16 @@ mod tests
     }
     impl ga::GASolution for TestSolution 
     {
+        fn new() -> TestSolution
+        {
+            TestSolution{ fitness: VAL }
+        }
+
         fn evaluate(&mut self) -> f32 { self.fitness }
     #[allow(unused_variables)]
-        fn crossover(&self, other : &Self) -> &Self { &self }
-        fn mutate(&mut self) {}
+        fn crossover(&self, other : &Self) -> Self { TestSolution::new() }
+    #[allow(unused_variables)]
+        fn mutate(&mut self, pm : f32) {}
         fn fitness(&self) -> f32 { self.fitness }
     }
 
@@ -33,8 +39,8 @@ mod tests
     }
     impl ga::GAFactory<TestSolution> for TestFactory
     {
-        fn initial_population(&mut self) -> Vec<TestSolution> {
-            vec![TestSolution { fitness: self.starting_fitness }]
+        fn initial_population(&mut self) -> GAPopulation<TestSolution> {
+            GAPopulation::new(vec![TestSolution { fitness: self.starting_fitness }])
         }
     }
 
@@ -43,15 +49,15 @@ mod tests
         sga.initialize();
         assert_eq!(sga.step(), 1);
         assert_eq!(sga.done(), false);
-        assert_eq!(sga.population().len(), 1);
-        assert_eq!(sga.population()[0].fitness(), VAL);
+        assert_eq!(sga.population().size(), 1);
+        assert_eq!(sga.population().best().fitness(), VAL);
     }
     
     #[test]
     fn init_test_with_initial_population()
     {
         env_logger::init();
-        let initial_population = vec![TestSolution { fitness: VAL}];
+        let initial_population = GAPopulation::new(vec![TestSolution { fitness: VAL}]);
 
         let mut ga : ga::SimpleGeneticAlgorithm<TestSolution> =
                      ga::SimpleGeneticAlgorithm::new(ga::SimpleGeneticAlgorithmCfg {
@@ -108,7 +114,7 @@ mod tests
     fn init_test_empty_initial_pop()
     {
         env_logger::init();
-        let empty_initial_population : Vec<TestSolution> = vec![];
+        let empty_initial_population : GAPopulation<TestSolution> = GAPopulation::new(vec![]);
         let mut ga : ga::SimpleGeneticAlgorithm<TestSolution> =
                      ga::SimpleGeneticAlgorithm::new(ga::SimpleGeneticAlgorithmCfg {
                                                        d_seed : 1,

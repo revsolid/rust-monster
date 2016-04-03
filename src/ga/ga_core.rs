@@ -16,54 +16,80 @@ impl Default for GAFlags
 }
 
 
-// Genetic Algorithm Configuration
-// TODO: RUST DOCS!
+/// Genetic Algorithm Configuration
 pub trait GAConfig
 {
     fn flags(&self) -> GAFlags;
     fn max_generations(&self) -> i32;
-    fn percentage_crossover(&self) -> f32;
+    fn probability_crossover(&self) -> f32;
     fn probability_mutation(&self) -> f32;
 }
 
 
-// Genetic Algorithm Solution
-// TODO: RUST DOCS!
+/// Genetic Algorithm Solution
 pub trait GASolution
 {
+    fn new() -> Self;
     fn evaluate(&mut self) -> f32;
-    fn crossover(&self, other : &Self) -> &Self;
-    fn mutate(&mut self);
+    fn crossover(&self, other : &Self) -> Self;
+    fn mutate(&mut self, pMutation : f32);
     fn fitness(&self) -> f32;
 }
 
-// Genetic Algorithm Population
-// TODO: RUST DOCS!
-// TODO: Move other traits to use population
-pub struct GAPopulation<T: GASolution>
+
+/// Genetic Algorithm Population
+pub struct GAPopulation<T>
 {
     population : Vec<T>
 }
-
 impl<T: GASolution> GAPopulation<T>
 {
-}
-
-
-// Genetic Algorithm Solution Factory
-// TODO: RUST DOCS!
-pub trait GAFactory<T: GASolution>
-{
-    fn initial_population(&mut self) -> Vec<T>
+    // TODO: New should use some parameters, maybe a Config
+    pub fn new(p: Vec<T>) -> GAPopulation<T>
     {
-        let v: Vec<T> = vec![];
-        v
+        return GAPopulation {
+                   population: p 
+               }
+    }
+
+    pub fn evaluate(&mut self)
+    {
+        for ref mut ind in &mut self.population
+        {
+            ind.evaluate();
+        }
+    }
+
+    pub fn size(&self) -> usize
+    {
+        self.population.len()
+    }
+
+    //TODO: this is a temporary implementation
+    pub fn select(&self) -> &T
+    {
+        &self.population[0]
+    }
+
+    //TODO: This is a temporary implementation 
+    pub fn best(&self) -> &T
+    {
+        &self.population[0]
     }
 }
 
 
-// Genetic Algorithm
-// TODO: RUST DOCS!
+/// Genetic Algorithm Solution Factory
+pub trait GAFactory<T: GASolution>
+{
+    fn initial_population(&mut self) -> GAPopulation<T> 
+    {
+        GAPopulation::new(vec![])
+    }
+}
+
+
+/// Genetic Algorithm
 pub trait GeneticAlgorithm<T: GASolution>
 {
     // GENERIC GA METHODS - Should not be overriden frequently
@@ -88,7 +114,7 @@ pub trait GeneticAlgorithm<T: GASolution>
     // IMPLEMENTATION SPECIFIC
     fn config(&mut self) -> &GAConfig;
 
-    fn population(&mut self) -> &Vec<T>;
+    fn population(&mut self) -> &mut GAPopulation<T>;
 
     fn initialize_internal(&mut self) {}
     fn step_internal(&mut self) -> i32 { 0 }
