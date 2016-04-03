@@ -29,18 +29,22 @@ pub trait GAConfig
 /// Genetic Algorithm Solution
 pub trait GASolution
 {
+    //Static
     fn new() -> Self;
-    fn evaluate(&mut self) -> f32;
+
+    // Instance
+    fn clone(&self) -> Self;
     fn crossover(&self, other : &Self) -> Self;
-    fn mutate(&mut self, pMutation : f32);
+    fn evaluate(&mut self) -> f32;
     fn fitness(&self) -> f32;
+    fn mutate(&mut self, pMutation : f32);
 }
 
 
 /// Genetic Algorithm Population
 pub struct GAPopulation<T>
 {
-    population : Vec<T>
+    population: Vec<T>
 }
 impl<T: GASolution> GAPopulation<T>
 {
@@ -75,6 +79,12 @@ impl<T: GASolution> GAPopulation<T>
     pub fn best(&self) -> &T
     {
         &self.population[0]
+    }
+
+    //TODO: This is a temporary implementation 
+    pub fn worst(&self) -> &T
+    {
+        &self.population[self.population.len()-1]
     }
 }
 

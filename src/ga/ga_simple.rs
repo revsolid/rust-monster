@@ -17,6 +17,9 @@ pub struct SimpleGeneticAlgorithmCfg
     pub flags                   : GAFlags, 
     pub probability_crossover   : f32,
     pub probability_mutation    : f32,
+
+    // Simple GA
+    pub elitism : bool
 }
 impl GAConfig for SimpleGeneticAlgorithmCfg
 {
@@ -35,6 +38,13 @@ impl GAConfig for SimpleGeneticAlgorithmCfg
     fn probability_mutation(&self) -> f32
     {
         self.probability_mutation 
+    }
+}
+impl SimpleGeneticAlgorithmCfg
+{
+    fn elitism(&self) -> bool
+    {
+        self.elitism
     }
 }
 
@@ -114,7 +124,6 @@ impl<T: GASolution> GeneticAlgorithm<T> for SimpleGeneticAlgorithm <T>
         assert!(self.population().size() > 0)
     }
 
-    #[allow(unused_variables)]
     fn step_internal(&mut self) -> i32
     {
         let mut new_individuals : Vec<T> = vec![];
@@ -123,13 +132,11 @@ impl<T: GASolution> GeneticAlgorithm<T> for SimpleGeneticAlgorithm <T>
         self.population.evaluate();
 
         // Create new individuals 
-        for i in 0..self.population.size()
+        for _ in 0..self.population.size()
         {
             let ind = self.population.select();
-            //TODO: new_ind = ind.clone()
-            let mut new_ind = T::new();
-
-            if ga_random_float() < self.config.probability_crossover() 
+            let mut new_ind = ind.clone();
+            if ga_random_float_test(self.config.probability_crossover())
             {
                 let ind_2 = self.population.select();
                 new_ind = ind.crossover(ind_2);
@@ -140,7 +147,17 @@ impl<T: GASolution> GeneticAlgorithm<T> for SimpleGeneticAlgorithm <T>
             new_individuals.push(new_ind);
         }
 
-        // TODO: Check for Elitism
+        let best_old_individual = self.population.best();
+        // population.swap(new_individuals)
+        // population.sort()
+
+        if self.config.elitism()
+        {
+            if best_old_individual.fitness() > self.population.worst().fitness()
+            {
+                // population.swap_individual(best_old_individual, ...)
+            }
+        }
 
         self.current_generation += 1;
         self.current_generation
