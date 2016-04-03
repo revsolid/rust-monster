@@ -1,11 +1,7 @@
 // TODO: COPYRIGHT, USE & AUTHORS
-use super::ga_core::{GAConfig, GAFactory, GAFlags, GeneticAlgorithm, GASolution};
-
-/// Simple Genetic Algorithm 
-///
-/// A basic implementation of a Genetic Algorithm
-/// TODO: Based on ?, GALib Ref, Basic Qualities
-///
+use super::ga_core::{GAConfig, GAFactory, GAFlags, GeneticAlgorithm,
+                     GASolution, GAPopulation};
+use super::ga_random::rand::*;
 
 // Simple Genetic Algorithm Config
 #[derive(Copy, Clone, Default, Debug)]
@@ -17,10 +13,10 @@ pub struct SimpleGeneticAlgorithmCfg
     pub is_min : bool,
 
     // GAConfig Trait
-    pub max_generations        : i32, 
-    pub flags                  : GAFlags, 
-    pub percentage_crossover   : f32,
-    pub probability_mutation   : f32,
+    pub max_generations         : i32, 
+    pub flags                   : GAFlags, 
+    pub probability_crossover   : f32,
+    pub probability_mutation    : f32,
 }
 impl GAConfig for SimpleGeneticAlgorithmCfg
 {
@@ -32,9 +28,9 @@ impl GAConfig for SimpleGeneticAlgorithmCfg
     {
         self.max_generations
     }
-    fn percentage_crossover(&self) -> f32
+    fn probability_crossover(&self) -> f32
     {
-        self.percentage_crossover
+        self.probability_crossover
     }
     fn probability_mutation(&self) -> f32
     {
@@ -42,13 +38,32 @@ impl GAConfig for SimpleGeneticAlgorithmCfg
     }
 }
 
-// Simple Genetic Algorithm
-// TODO: RUST DOCS! 
-pub struct SimpleGeneticAlgorithm<T: GASolution>
+/// Simple Genetic Algorithm 
+///
+/// A basic implementation of a Genetic Algorithm.
+///
+/// This genetic algorithm is the 'simple' genetic algorithm that Goldberg describes 
+/// in his book. It uses non-overlapping populations. When you create a simple genetic 
+/// algorithm, you must specify either an individual or a population of individuals. 
+/// The new genetic algorithm will clone the individual(s) that you specify to make 
+/// its own population. You can change most of the genetic algorithm behaviors after 
+/// creation and during the course of the evolution.
+///
+/// The simple genetic algorithm creates an initial population by cloning the individual 
+/// or population you pass when you create it. Each generation the algorithm creates 
+/// an entirely new population of individuals by selecting from the previous population 
+/// then mating to produce the new offspring for the new population. This process continues 
+/// until the stopping criteria are met (determined by the terminator).
+///
+/// Elitism is optional. By default, elitism is on, meaning that the best individual 
+/// from each generation is carried over to the next generation. To turn off elitism, 
+/// pass gaFalse to the elitist member function. 
+///
+pub struct SimpleGeneticAlgorithm<T>
 {
   current_generation : i32, 
   config : SimpleGeneticAlgorithmCfg,
-  population : Vec<T>
+  population : GAPopulation<T>
 }
 impl<T: GASolution> SimpleGeneticAlgorithm<T>
 {
@@ -56,9 +71,9 @@ impl<T: GASolution> SimpleGeneticAlgorithm<T>
     // pattern GitHub
     pub fn new(cfg: SimpleGeneticAlgorithmCfg,
                factory: Option<&mut GAFactory<T>>,
-               population: Option<Vec<T>>) -> SimpleGeneticAlgorithm<T>
+               population: Option<GAPopulation<T>>) -> SimpleGeneticAlgorithm<T>
     {
-        let p : Vec<T>;
+        let p : GAPopulation<T>;
         match factory
         {
             Some(f) => {
@@ -89,34 +104,44 @@ impl<T: GASolution> GeneticAlgorithm<T> for SimpleGeneticAlgorithm <T>
         &self.config
     }
 
-    fn population(&mut self) -> &Vec<T>
+    fn population(&mut self) -> &mut GAPopulation<T>
     {
-        return &self.population
+        return &mut self.population
     }
 
     fn initialize_internal(&mut self)
     {
-        assert!(self.population().len() > 0)
+        assert!(self.population().size() > 0)
     }
 
     #[allow(unused_variables)]
     fn step_internal(&mut self) -> i32
     {
-        let survivors: i32;
-        let new_individuals: i32;
-        let new_population : Vec<T>;
+        let mut new_individuals : Vec<T> = vec![];
 
-        //TODO: Lots of configuration dependant stuff
-        //      maybe creating a builder / factory of
-        //      delegates would be cool
+        // Evaluate the population
+        self.population.evaluate();
 
-    //  for ( each individual in new population )
-    //  {
-    //      // TODO: Context how?
-    //      // GALib does it with a void* that gets passed around
-    //      // What is the void* of rust?
-    //      ind.evaluate();
-    //  }
+        // Create new individuals 
+        for i in 0..self.population.size()
+        {
+            let ind = self.population.select();
+            //TODO: new_ind = ind.clone()
+            let mut new_ind = T::new();
+
+            if ga_random_float() < self.config.probability_crossover() 
+            {
+                let ind_2 = self.population.select();
+                new_ind = ind.crossover(ind_2);
+            }
+
+            new_ind.mutate(self.config.probability_mutation());
+
+            new_individuals.push(new_ind);
+        }
+
+        // TODO: Check for Elitism
+
         self.current_generation += 1;
         self.current_generation
     }
