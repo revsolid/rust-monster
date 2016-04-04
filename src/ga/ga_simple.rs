@@ -59,19 +59,19 @@ impl GAConfig for SimpleGeneticAlgorithmCfg
 /// from each generation is carried over to the next generation. To turn off elitism, 
 /// pass gaFalse to the elitist member function. 
 ///
-pub struct SimpleGeneticAlgorithm<T>
+pub struct SimpleGeneticAlgorithm<'a, T: 'a>
 {
   current_generation : i32, 
   config : SimpleGeneticAlgorithmCfg,
-  population : GAPopulation<T>
+  population : GAPopulation<'a, T>
 }
-impl<T: GASolution> SimpleGeneticAlgorithm<T>
+impl<'a, T: GASolution> SimpleGeneticAlgorithm<'a, T>
 {
     // TODO: Document this -new- pattern and others from the
     // pattern GitHub
     pub fn new(cfg: SimpleGeneticAlgorithmCfg,
                factory: Option<&mut GAFactory<T>>,
-               population: Option<GAPopulation<T>>) -> SimpleGeneticAlgorithm<T>
+               population: Option<GAPopulation<T>>) -> SimpleGeneticAlgorithm<'a, T>
     {
         let p : GAPopulation<T>;
         match factory
@@ -97,7 +97,7 @@ impl<T: GASolution> SimpleGeneticAlgorithm<T>
         SimpleGeneticAlgorithm { current_generation: 0, config : cfg, population : p}
     }
 }
-impl<T: GASolution> GeneticAlgorithm<T> for SimpleGeneticAlgorithm <T>
+impl<'a, T: GASolution> GeneticAlgorithm<T> for SimpleGeneticAlgorithm <'a, T>
 {
     fn config(&mut self) -> &GAConfig
     {
