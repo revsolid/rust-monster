@@ -70,8 +70,8 @@ impl<'a, T: GASolution> SimpleGeneticAlgorithm<'a, T>
     // TODO: Document this -new- pattern and others from the
     // pattern GitHub
     pub fn new(cfg: SimpleGeneticAlgorithmCfg,
-               factory: Option<&mut GAFactory<T>>,
-               population: Option<GAPopulation<T>>) -> SimpleGeneticAlgorithm<'a, T>
+               factory: Option<&'a mut GAFactory<T>>,
+               population: Option<GAPopulation<'a, T>>) -> SimpleGeneticAlgorithm<'a, T>
     {
         let p : GAPopulation<T>;
         match factory
@@ -97,14 +97,14 @@ impl<'a, T: GASolution> SimpleGeneticAlgorithm<'a, T>
         SimpleGeneticAlgorithm { current_generation: 0, config : cfg, population : p}
     }
 }
-impl<'a, T: GASolution> GeneticAlgorithm<T> for SimpleGeneticAlgorithm <'a, T>
+impl<'a, T: GASolution> GeneticAlgorithm<'a, T> for SimpleGeneticAlgorithm <'a, T>
 {
     fn config(&mut self) -> &GAConfig
     {
         &self.config
     }
 
-    fn population(&mut self) -> &mut GAPopulation<T>
+    fn population(&mut self) -> &mut GAPopulation<'a, T>
     {
         return &mut self.population
     }

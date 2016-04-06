@@ -8,7 +8,7 @@ extern crate env_logger;
 #[cfg(test)]
 mod tests
 {
-    use rust_monster::ga::{GeneticAlgorithm, GASolution, GAPopulation};
+    use rust_monster::ga::{GeneticAlgorithm, GASolution, GAPopulation, GAPopulationSortOrder};
     use rust_monster::ga;
     use env_logger;
     const VAL : f32 = 3.14159;
@@ -30,6 +30,7 @@ mod tests
     #[allow(unused_variables)]
         fn mutate(&mut self, pm : f32) {}
         fn fitness(&self) -> f32 { self.fitness }
+        fn score(&self) -> f32 { self.fitness }
     }
 
     #[allow(dead_code)]
@@ -40,7 +41,7 @@ mod tests
     impl ga::GAFactory<TestSolution> for TestFactory
     {
         fn initial_population(&mut self) -> GAPopulation<TestSolution> {
-            GAPopulation::new(vec![TestSolution { fitness: self.starting_fitness }])
+            GAPopulation::new(vec![TestSolution { fitness: self.starting_fitness }], GAPopulationSortOrder::HighIsBest)
         }
     }
 
@@ -57,7 +58,7 @@ mod tests
     fn init_test_with_initial_population()
     {
         env_logger::init();
-        let initial_population = GAPopulation::new(vec![TestSolution { fitness: VAL}]);
+        let initial_population = GAPopulation::new(vec![TestSolution { fitness: VAL}], GAPopulationSortOrder::HighIsBest);
 
         let mut ga : ga::SimpleGeneticAlgorithm<TestSolution> =
                      ga::SimpleGeneticAlgorithm::new(ga::SimpleGeneticAlgorithmCfg {
@@ -114,7 +115,7 @@ mod tests
     fn init_test_empty_initial_pop()
     {
         env_logger::init();
-        let empty_initial_population : GAPopulation<TestSolution> = GAPopulation::new(vec![]);
+        let empty_initial_population : GAPopulation<TestSolution> = GAPopulation::new(vec![], GAPopulationSortOrder::HighIsBest);
         let mut ga : ga::SimpleGeneticAlgorithm<TestSolution> =
                      ga::SimpleGeneticAlgorithm::new(ga::SimpleGeneticAlgorithmCfg {
                                                        d_seed : 1,

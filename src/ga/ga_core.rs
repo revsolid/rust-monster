@@ -51,8 +51,8 @@ pub enum GAPopulationSortBasis
 // Isn't a boolean enough?
 pub enum GAPopulationSortOrder
 {
-    LOW_IS_BEST,
-    HIGH_IS_BEST,
+    LowIsBest,
+    HighIsBest,
 }
 
 /// Genetic Algorithm Population
@@ -118,7 +118,7 @@ impl<'a, T: GASolution> GAPopulation<'a, T>
         &self.population[0]
     }
 
-    pub fn sort(&self, force_sort: bool, sort_basis: GAPopulationSortBasis)
+    pub fn sort(&mut self, force_sort: bool, sort_basis: GAPopulationSortBasis)
     {
         match sort_basis
         {
@@ -127,10 +127,10 @@ impl<'a, T: GASolution> GAPopulation<'a, T>
                 {
                     match self.sort_order
                     {
-                        GAPopulationSortOrder::LOW_IS_BEST
+                        GAPopulationSortOrder::LowIsBest
                         =>  self.population_raw.sort_by(|s1: &&T, s2: &&T|
                                                         s1.score().partial_cmp(&s2.score()).unwrap_or(Ordering::Equal)),
-                        GAPopulationSortOrder::HIGH_IS_BEST
+                        GAPopulationSortOrder::HighIsBest
                         =>  self.population_raw.sort_by(|s1: &&T, s2: &&T|
                                                         s2.score().partial_cmp(&s1.score()).unwrap_or(Ordering::Equal))
                     };
@@ -143,10 +143,10 @@ impl<'a, T: GASolution> GAPopulation<'a, T>
                 {
                     match self.sort_order
                     {
-                        GAPopulationSortOrder::LOW_IS_BEST
+                        GAPopulationSortOrder::LowIsBest
                         =>  self.population_scaled.sort_by(|s1: &&T, s2: &&T|
                                                            s1.fitness().partial_cmp(&s2.fitness()).unwrap_or(Ordering::Equal)),
-                        GAPopulationSortOrder::HIGH_IS_BEST
+                        GAPopulationSortOrder::HighIsBest
                         =>  self.population_scaled.sort_by(|s1: &&T, s2: &&T|
                                                            s2.fitness().partial_cmp(&s1.fitness()).unwrap_or(Ordering::Equal))
                     };
@@ -165,13 +165,13 @@ pub trait GAFactory<T: GASolution>
 {
     fn initial_population(&mut self) -> GAPopulation<T> 
     {
-        GAPopulation::new(vec![], GAPopulationSortOrder::HIGH_IS_BEST)
+        GAPopulation::new(vec![], GAPopulationSortOrder::HighIsBest)
     }
 }
 
 
 /// Genetic Algorithm
-pub trait GeneticAlgorithm<T: GASolution>
+pub trait GeneticAlgorithm<'a, T: GASolution>
 {
     // GENERIC GA METHODS - Should not be overriden frequently
     fn initialize(&mut self)
@@ -195,7 +195,7 @@ pub trait GeneticAlgorithm<T: GASolution>
     // IMPLEMENTATION SPECIFIC
     fn config(&mut self) -> &GAConfig;
 
-    fn population(&mut self) -> &mut GAPopulation<T>;
+    fn population(&mut self) -> &mut GAPopulation<'a, T>;
 
     fn initialize_internal(&mut self) {}
     fn step_internal(&mut self) -> i32 { 0 }
