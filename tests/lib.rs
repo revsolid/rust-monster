@@ -78,7 +78,6 @@ mod tests
     {
         ga_test_setup();
         let initial_population = GAPopulation::new(vec![TestSolution { fitness: VAL}], GAPopulationSortOrder::HighIsBest);
-
         let mut ga : ga::SimpleGeneticAlgorithm<TestSolution> =
                      ga::SimpleGeneticAlgorithm::new(ga::SimpleGeneticAlgorithmCfg {
                                                        d_seed : 1,

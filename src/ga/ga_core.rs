@@ -37,6 +37,7 @@ pub trait GASolution
     // Instance
     fn clone(&self) -> Self;
     fn crossover(&self, other : &Self) -> Self;
+<<<<<<< HEAD
     fn mutate(&mut self, pMutation : f32);
     fn evaluate(&mut self) -> f32;
     // Scaled fitness score
@@ -50,6 +51,11 @@ pub enum GAPopulationSortBasis
 {
     RAW, 
     SCALED,
+=======
+    fn evaluate(&mut self) -> f32;
+    fn fitness(&self) -> f32;
+    fn mutate(&mut self, pMutation : f32);
+>>>>>>> 52bdca7bcb78c97b3a87686e0b30eb74afe702cf
 }
 
 // Isn't a boolean enough?
