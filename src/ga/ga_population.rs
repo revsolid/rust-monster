@@ -37,7 +37,8 @@ pub struct GAPopulation<T: GASolution>
     // Is 'population_scaled' sorted?
     is_scaled_sorted: bool,
 
-    // GALib keeps 2 lists of solutions, one sorted by Raw and one by Scaled.
+    // We keep 2 lists of indexes to the population vector.
+    // One sorted by Raw Score and one by Scaled Score (Fitness).
 }
 impl<T: GASolution> GAPopulation<T>
 {
@@ -101,9 +102,9 @@ impl<T: GASolution> GAPopulation<T>
         match sort_basis
         {
             GAPopulationSortBasis::Raw
-            => { &self.population[i] },
+            => { &self.population[self.population_order_raw[i]] },
             GAPopulationSortBasis::Scaled
-            => { &self.population[i] },
+            => { &self.population[self.population_order_scaled[i]] },
         }
     }
 
@@ -120,7 +121,7 @@ impl<T: GASolution> GAPopulation<T>
         match sort_basis
         {
             GAPopulationSortBasis::Raw
-            =>  if !self.is_raw_sorted || force_sort
+            =>  if (!self.is_raw_sorted) || force_sort
                 {
                     match self.sort_order
                     {
@@ -144,21 +145,21 @@ impl<T: GASolution> GAPopulation<T>
                 },
 
             GAPopulationSortBasis::Scaled
-            =>  if !self.is_scaled_sorted || force_sort
+            =>  if (!self.is_scaled_sorted) || force_sort
                 {
                     match self.sort_order
                     {
                         GAPopulationSortOrder::LowIsBest =>
                         { 
                             ordered.sort_by(|s1: &usize, s2: &usize|
-                                            self.population[*s1].score()
+                                            self.population[*s1].fitness()
                                                 .partial_cmp(&self.population[*s2].fitness()).unwrap_or(Ordering::Equal));
                         },
 
                         GAPopulationSortOrder::HighIsBest =>
                         {
                             ordered.sort_by(|s1: &usize, s2: &usize|
-                                            self.population[*s2].score()
+                                            self.population[*s2].fitness()
                                                 .partial_cmp(&self.population[*s1].fitness()).unwrap_or(Ordering::Equal));
                         }
                     };

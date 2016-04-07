@@ -9,7 +9,7 @@ extern crate env_logger;
 mod tests
 {
     use rust_monster::ga::ga_core::{GeneticAlgorithm, GASolution, GAFactory, DEBUG_FLAG};
-    use rust_monster::ga::ga_population::{GAPopulation, GAPopulationSortOrder};
+    use rust_monster::ga::ga_population::{GAPopulation, GAPopulationSortOrder, GAPopulationSortBasis};
     use rust_monster::ga::ga_simple::{SimpleGeneticAlgorithm, SimpleGeneticAlgorithmCfg};
 
     use env_logger;
@@ -35,7 +35,7 @@ mod tests
         fn crossover(&self, other : &Self) -> Self { TestSolution::new() }
     #[allow(unused_variables)]
         fn mutate(&mut self, pm : f32) {}
-        fn fitness(&self) -> f32 { self.fitness }
+        fn fitness(&self) -> f32 { (1.0 / self.fitness) }
         fn score(&self) -> f32 { self.fitness }
     }
 
@@ -70,7 +70,7 @@ mod tests
         assert_eq!(sga.step(), 1);
         assert_eq!(sga.done(), false);
         assert_eq!(sga.population().size(), 1);
-        assert_eq!(sga.population().best().fitness(), VAL);
+        assert_eq!(sga.population().best().score(), VAL);
     }
 
 ////////////////////////////////////////
@@ -149,5 +149,27 @@ mod tests
                                                  );
         ga.initialize()
         //Not reached 
+    }
+
+    // This test should live in the ga_population file directly,
+    // but since it requires GASolution objects it is here for now.
+    // Maybe we could use a Mocking library.
+    // TODO: This doesn't go here.
+    #[test]
+    fn test_sort_population()
+    {
+        let f = VAL;
+        let f_m = VAL - 1.0;
+        let i_f = 1.0 / f;
+        let i_f_m = 1.0 / f_m;
+
+        let mut population = GAPopulation::new(vec![TestSolution { fitness: f }, TestSolution { fitness: f_m }], GAPopulationSortOrder::HighIsBest);
+        population.sort();
+
+        //TestSolution's Fitness is the inverse of the Score (F = 1/S)
+        assert_eq!(population.individual(0, GAPopulationSortBasis::Raw).score(), f);
+        assert_eq!(population.individual(1, GAPopulationSortBasis::Raw).score(), f_m);
+        assert_eq!(population.individual(0, GAPopulationSortBasis::Scaled).fitness(), i_f_m);
+        assert_eq!(population.individual(1, GAPopulationSortBasis::Scaled).fitness(), i_f);
     }
 }

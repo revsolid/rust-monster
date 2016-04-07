@@ -116,20 +116,18 @@ impl<T: GASolution> GeneticAlgorithm<T> for SimpleGeneticAlgorithm <T>
 
     fn population(&mut self) -> &mut GAPopulation<T>
     {
-        return &mut self.population
+        &mut self.population
     }
 
     fn initialize_internal(&mut self)
     {
-        assert!(self.population().size() > 0)
+        assert!(self.population().size() > 0);
+        self.population.sort();
     }
 
     fn step_internal(&mut self) -> i32
     {
         let mut new_individuals : Vec<T> = vec![];
-
-        // Evaluate the population
-        self.population.evaluate();
 
         // Create new individuals 
         for _ in 0..self.population.size()
@@ -147,9 +145,12 @@ impl<T: GASolution> GeneticAlgorithm<T> for SimpleGeneticAlgorithm <T>
             new_individuals.push(new_ind);
         }
 
-        let best_old_individual = self.population.best().clone();
-        // population.swap(new_individuals)
+        // Evaluate the new population
+//        self.population.swap(new_individuals);
+        self.population.evaluate();
         self.population.sort();
+
+        let best_old_individual = self.population.best().clone();
 
         if self.config.elitism()
         {
