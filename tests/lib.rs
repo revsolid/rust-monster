@@ -8,8 +8,9 @@ extern crate env_logger;
 #[cfg(test)]
 mod tests
 {
-    use rust_monster::ga::{GeneticAlgorithm, GASolution, GAPopulation, GAPopulationSortOrder};
-    use rust_monster::ga;
+    use rust_monster::ga::ga_core::{GeneticAlgorithm, GASolution, GAFactory, DEBUG_FLAG};
+    use rust_monster::ga::ga_population::{GAPopulation, GAPopulationSortOrder};
+    use rust_monster::ga::ga_simple::{SimpleGeneticAlgorithm, SimpleGeneticAlgorithmCfg};
 
     use env_logger;
     use std::sync::{Once, ONCE_INIT};
@@ -21,7 +22,7 @@ mod tests
     {
         fitness: f32
     }
-    impl ga::GASolution for TestSolution 
+    impl GASolution for TestSolution 
     {
         fn new() -> TestSolution
         {
@@ -43,7 +44,7 @@ mod tests
     {
         starting_fitness: f32
     }
-    impl ga::GAFactory<TestSolution> for TestFactory
+    impl GAFactory<TestSolution> for TestFactory
     {
         fn initial_population(&mut self) -> GAPopulation<TestSolution> {
             GAPopulation::new(vec![TestSolution { fitness: self.starting_fitness }], GAPopulationSortOrder::HighIsBest)
@@ -55,13 +56,15 @@ mod tests
 
     fn ga_test_setup()
     {
+        // This is only called once, works nicely as a Setup mechanism
+        // TODO: Can we do somethign similar for teardown?
         INIT.call_once(||{
             env_logger::init().unwrap();
         });
     }
 
 
-    fn simple_ga_validation(sga:&mut ga::SimpleGeneticAlgorithm<TestSolution>)
+    fn simple_ga_validation(sga:&mut SimpleGeneticAlgorithm<TestSolution>)
     {
         sga.initialize();
         assert_eq!(sga.step(), 1);
@@ -78,16 +81,16 @@ mod tests
     {
         ga_test_setup();
         let initial_population = GAPopulation::new(vec![TestSolution { fitness: VAL}], GAPopulationSortOrder::HighIsBest);
-        let mut ga : ga::SimpleGeneticAlgorithm<TestSolution> =
-                     ga::SimpleGeneticAlgorithm::new(ga::SimpleGeneticAlgorithmCfg {
-                                                       d_seed : 1,
-                                                       flags : ga::DEBUG_FLAG,
-                                                       max_generations: 100,
-                                                       ..Default::default()
-                                                     },
-                                                     None,
-                                                     Some(initial_population) 
-                                                     );
+        let mut ga : SimpleGeneticAlgorithm<TestSolution> =
+                     SimpleGeneticAlgorithm::new(SimpleGeneticAlgorithmCfg {
+                                                   d_seed : 1,
+                                                   flags : DEBUG_FLAG,
+                                                   max_generations: 100,
+                                                   ..Default::default()
+                                                 },
+                                                 None,
+                                                 Some(initial_population) 
+                                                 );
         simple_ga_validation(&mut ga);
     }
 
@@ -96,16 +99,16 @@ mod tests
     {
         ga_test_setup();
         let mut factory = TestFactory { starting_fitness: VAL };
-        let mut ga : ga::SimpleGeneticAlgorithm<TestSolution> =
-                     ga::SimpleGeneticAlgorithm::new(ga::SimpleGeneticAlgorithmCfg {
-                                                       d_seed : 1,
-                                                       flags : ga::DEBUG_FLAG,
-                                                       max_generations: 100,
-                                                       ..Default::default()
-                                                     },
-                                                     Some(&mut factory as &mut ga::GAFactory<TestSolution>),
-                                                     None
-                                                     );
+        let mut ga : SimpleGeneticAlgorithm<TestSolution> =
+                     SimpleGeneticAlgorithm::new(SimpleGeneticAlgorithmCfg {
+                                                   d_seed : 1,
+                                                   flags : DEBUG_FLAG,
+                                                   max_generations: 100,
+                                                   ..Default::default()
+                                                 },
+                                                 Some(&mut factory as &mut GAFactory<TestSolution>),
+                                                 None
+                                                 );
         simple_ga_validation(&mut ga);
     }
 
@@ -115,16 +118,16 @@ mod tests
     fn init_test_missing_args()
     {
         ga_test_setup();
-        let ga : ga::SimpleGeneticAlgorithm<TestSolution> =
-                 ga::SimpleGeneticAlgorithm::new(ga::SimpleGeneticAlgorithmCfg {
-                                                   d_seed : 1,
-                                                   flags : ga::DEBUG_FLAG,
-                                                   max_generations: 100,
-                                                   ..Default::default()
-                                                 },
-                                                 None,
-                                                 None 
-                                                 );
+        let ga : SimpleGeneticAlgorithm<TestSolution> =
+                 SimpleGeneticAlgorithm::new(SimpleGeneticAlgorithmCfg {
+                                               d_seed : 1,
+                                               flags : DEBUG_FLAG,
+                                               max_generations: 100,
+                                               ..Default::default()
+                                             },
+                                             None,
+                                             None 
+                                             );
         // Not reached
     }
 
@@ -134,16 +137,16 @@ mod tests
     {
         ga_test_setup();
         let empty_initial_population : GAPopulation<TestSolution> = GAPopulation::new(vec![], GAPopulationSortOrder::HighIsBest);
-        let mut ga : ga::SimpleGeneticAlgorithm<TestSolution> =
-                     ga::SimpleGeneticAlgorithm::new(ga::SimpleGeneticAlgorithmCfg {
-                                                       d_seed : 1,
-                                                       flags : ga::DEBUG_FLAG,
-                                                       max_generations: 100,
-                                                       ..Default::default()
-                                                     },
-                                                     None,
-                                                     Some(empty_initial_population) 
-                                                     );
+        let mut ga : SimpleGeneticAlgorithm<TestSolution> =
+                     SimpleGeneticAlgorithm::new(SimpleGeneticAlgorithmCfg {
+                                                   d_seed : 1,
+                                                   flags : DEBUG_FLAG,
+                                                   max_generations: 100,
+                                                   ..Default::default()
+                                                 },
+                                                 None,
+                                                 Some(empty_initial_population) 
+                                                 );
         ga.initialize()
         //Not reached 
     }

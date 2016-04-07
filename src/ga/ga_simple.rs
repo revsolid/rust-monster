@@ -1,7 +1,7 @@
 // TODO: COPYRIGHT, USE & AUTHORS
-use super::ga_core::{GAConfig, GAFactory, GAFlags, GeneticAlgorithm,
-                     GASolution, GAPopulation};
-use super::ga_random::rand::*;
+use super::ga_core::{GAConfig, GAFactory, GAFlags, GeneticAlgorithm, GASolution};
+use super::ga_population::GAPopulation;
+use super::ga_random::ga_random_float_test;
 
 // Simple Genetic Algorithm Config
 #[derive(Copy, Clone, Default, Debug)]
@@ -69,19 +69,19 @@ impl SimpleGeneticAlgorithmCfg
 /// from each generation is carried over to the next generation. To turn off elitism, 
 /// pass gaFalse to the elitist member function. 
 ///
-pub struct SimpleGeneticAlgorithm<'a, T: 'a>
+pub struct SimpleGeneticAlgorithm<T: GASolution>
 {
   current_generation : i32, 
   config : SimpleGeneticAlgorithmCfg,
-  population : GAPopulation<'a, T>
+  population : GAPopulation<T>
 }
-impl<'a, T: GASolution> SimpleGeneticAlgorithm<'a, T>
+impl<T: GASolution> SimpleGeneticAlgorithm<T>
 {
     // TODO: Document this -new- pattern and others from the
     // pattern GitHub
     pub fn new(cfg: SimpleGeneticAlgorithmCfg,
-               factory: Option<&'a mut GAFactory<T>>,
-               population: Option<GAPopulation<'a, T>>) -> SimpleGeneticAlgorithm<'a, T>
+               factory: Option<&mut GAFactory<T>>,
+               population: Option<GAPopulation<T>>) -> SimpleGeneticAlgorithm<T>
     {
         let p : GAPopulation<T>;
         match factory
@@ -107,14 +107,14 @@ impl<'a, T: GASolution> SimpleGeneticAlgorithm<'a, T>
         SimpleGeneticAlgorithm { current_generation: 0, config : cfg, population : p}
     }
 }
-impl<'a, T: GASolution> GeneticAlgorithm<'a, T> for SimpleGeneticAlgorithm <'a, T>
+impl<T: GASolution> GeneticAlgorithm<T> for SimpleGeneticAlgorithm <T>
 {
     fn config(&mut self) -> &GAConfig
     {
         &self.config
     }
 
-    fn population(&mut self) -> &mut GAPopulation<'a, T>
+    fn population(&mut self) -> &mut GAPopulation<T>
     {
         return &mut self.population
     }
@@ -147,9 +147,9 @@ impl<'a, T: GASolution> GeneticAlgorithm<'a, T> for SimpleGeneticAlgorithm <'a, 
             new_individuals.push(new_ind);
         }
 
-        let best_old_individual = self.population.best();
+        let best_old_individual = self.population.best().clone();
         // population.swap(new_individuals)
-        // population.sort()
+        self.population.sort();
 
         if self.config.elitism()
         {
