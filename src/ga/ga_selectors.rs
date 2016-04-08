@@ -1,5 +1,6 @@
 // TODO: COPYRIGHT, USE & AUTHORS
-use super::ga_core::{GASolution, GAPopulation};
+use super::ga_core::GASolution;
+use super::ga_population::GAPopulation;
 
 /// Selector Trait
 ///

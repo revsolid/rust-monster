@@ -1,11 +1,7 @@
 // TODO: COPYRIGHT, USE & AUTHORS
 // TODO: RUST DOCS!
-pub use self::ga_core::*;
-pub use self::ga_random::*;
-pub use self::ga_simple::*;
-pub use self::ga_selectors::*;
-
-mod ga_core;
-mod ga_random;
-mod ga_simple;
-mod ga_selectors;
+pub mod ga_core;
+pub mod ga_population;
+pub mod ga_random;
+pub mod ga_simple;
+pub mod ga_selectors;
