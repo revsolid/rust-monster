@@ -1,5 +1,7 @@
 // TODO: COPYRIGHT, USE & AUTHORS
 
+use super::ga_population::{GAPopulation, GAPopulationSortOrder};
+
 /// Bit Flags for Genetic Algorithm Configuration 
 /// 
 ///
@@ -16,54 +18,45 @@ impl Default for GAFlags
 }
 
 
-// Genetic Algorithm Configuration
-// TODO: RUST DOCS!
+/// Genetic Algorithm Configuration
 pub trait GAConfig
 {
     fn flags(&self) -> GAFlags;
     fn max_generations(&self) -> i32;
-    fn percentage_crossover(&self) -> f32;
+    fn probability_crossover(&self) -> f32;
     fn probability_mutation(&self) -> f32;
 }
 
 
-// Genetic Algorithm Solution
-// TODO: RUST DOCS!
+/// Genetic Algorithm Solution
 pub trait GASolution
 {
+    //Static
+    fn new() -> Self;
+
+    // Instance
+    fn clone(&self) -> Self;
+    fn crossover(&self, other : &Self) -> Self;
+    fn mutate(&mut self, pMutation : f32);
     fn evaluate(&mut self) -> f32;
-    fn crossover(&self, other : &Self) -> &Self;
-    fn mutate(&mut self);
+    // Scaled fitness score
     fn fitness(&self) -> f32;
-}
-
-// Genetic Algorithm Population
-// TODO: RUST DOCS!
-// TODO: Move other traits to use population
-pub struct GAPopulation<T: GASolution>
-{
-    population : Vec<T>
-}
-
-impl<T: GASolution> GAPopulation<T>
-{
+    // Raw objective score
+    fn score(&self) -> f32;
 }
 
 
-// Genetic Algorithm Solution Factory
-// TODO: RUST DOCS!
+/// Genetic Algorithm Solution Factory
 pub trait GAFactory<T: GASolution>
 {
-    fn initial_population(&mut self) -> Vec<T>
+    fn initial_population(&mut self) -> GAPopulation<T> 
     {
-        let v: Vec<T> = vec![];
-        v
+        GAPopulation::new(vec![], GAPopulationSortOrder::HighIsBest)
     }
 }
 
 
-// Genetic Algorithm
-// TODO: RUST DOCS!
+/// Genetic Algorithm
 pub trait GeneticAlgorithm<T: GASolution>
 {
     // GENERIC GA METHODS - Should not be overriden frequently
@@ -88,7 +81,7 @@ pub trait GeneticAlgorithm<T: GASolution>
     // IMPLEMENTATION SPECIFIC
     fn config(&mut self) -> &GAConfig;
 
-    fn population(&mut self) -> &Vec<T>;
+    fn population(&mut self) -> &mut GAPopulation<T>;
 
     fn initialize_internal(&mut self) {}
     fn step_internal(&mut self) -> i32 { 0 }

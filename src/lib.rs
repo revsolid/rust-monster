@@ -9,5 +9,7 @@ extern crate bitflags;
 #[macro_use]
 extern crate log;
 
+extern crate rand;
+
 // Published Modules
 pub mod ga;
