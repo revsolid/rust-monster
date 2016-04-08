@@ -96,6 +96,9 @@ impl<T: GASolution> GAPopulation<T>
         self.individual(self.size()-1, GAPopulationSortBasis::Scaled)
     }
 
+    // Q: Seems like this could be ith_best() instead of individual().
+    //    indvidual() could be used to iterate through the population in no
+    //    particular order of score.
     pub fn individual(&self, i : usize, sort_basis : GAPopulationSortBasis) -> &T
     {
         // TODO: Check that i makes sense
@@ -112,6 +115,8 @@ impl<T: GASolution> GAPopulation<T>
     {
         self.sort_int(false, GAPopulationSortBasis::Scaled);
         self.sort_int(false, GAPopulationSortBasis::Raw);
+
+        // Q: Selector needs to be updated after sorting?
     }
 
     //TODO: I hate this name
