@@ -11,6 +11,7 @@ mod tests
     use rust_monster::ga::ga_core::{GeneticAlgorithm, GASolution, GAFactory, DEBUG_FLAG};
     use rust_monster::ga::ga_population::{GAPopulation, GAPopulationSortOrder, GAPopulationSortBasis};
     use rust_monster::ga::ga_simple::{SimpleGeneticAlgorithm, SimpleGeneticAlgorithmCfg};
+    use rust_monster::ga::ga_selectors::{GASelector, GARankSelector};
 
     use env_logger;
     use std::sync::{Once, ONCE_INIT};
@@ -70,7 +71,7 @@ mod tests
         assert_eq!(sga.step(), 1);
         assert_eq!(sga.done(), false);
         assert_eq!(sga.population().size(), 1);
-        assert_eq!(sga.population().best().score(), VAL);
+        assert_eq!(sga.population().best(GAPopulationSortBasis::Scaled).score(), VAL);
     }
 
 ////////////////////////////////////////
@@ -171,5 +172,27 @@ mod tests
         assert_eq!(population.individual(1, GAPopulationSortBasis::Raw).score(), f_m);
         assert_eq!(population.individual(0, GAPopulationSortBasis::Scaled).fitness(), i_f_m);
         assert_eq!(population.individual(1, GAPopulationSortBasis::Scaled).fitness(), i_f);
+    }
+
+    #[test]
+    #[allow(unused_variables)]
+    fn test_rank_selector()
+    {
+        let f = VAL;
+        let f_m = VAL - 1.0;
+        let i_f = 1.0 / f;
+        let i_f_m = 1.0 / f_m;
+
+        let mut population
+          = GAPopulation::new(vec![TestSolution { fitness: f },
+                                   TestSolution { fitness: f_m }],
+                              GAPopulationSortOrder::HighIsBest);
+
+        let mut rank_selector = GARankSelector { population: &mut population };
+
+        // Best Raw score is that of 1st solution.
+        assert_eq!(rank_selector.select(GAPopulationSortBasis::Raw).score(), f);
+        // Best Scaled score is that of 2nd solution (because fitness is inverse of score). Weird. In this case, LowIsBest.
+        assert_eq!(rank_selector.select(GAPopulationSortBasis::Scaled).fitness(), i_f_m);
     }
 }
