@@ -14,10 +14,8 @@ pub trait GASelector<'a, T: GASolution>
     /// Some selectors implement an empty update().
     fn update(&mut self) {}
 
-    fn select(&mut self, pop_sort_basis: GAPopulationSortBasis) -> &T;
+    fn select(&mut self) -> &T;
 }
-
-// Do we need {RAW, SCALED} enum? Why not just boolean?
 
 // GASolution-s live as long as the population. Lifetime 'a is bound to the
 // population borrowed by the 'population' member, as well as to the enclosed
@@ -31,7 +29,21 @@ pub struct GARankSelector<'a, T: 'a + GASolution>
     // Selectors modify populations (they sort them, for instance), so the
     // reference must be 'mut'.
     // TODO: Implement new() function and drop 'pub' from 'population'.
-    pub population: &'a mut GAPopulation<T>
+    pub population: &'a mut GAPopulation<T>,
+
+    pop_sort_basis: GAPopulationSortBasis
+}
+
+impl<'a, T: GASolution> GARankSelector<'a, T>
+{
+    pub fn new(p: &'a mut GAPopulation<T>, sort_basis: GAPopulationSortBasis) -> GARankSelector<'a, T>
+    {
+        GARankSelector
+        {
+            population: p,
+            pop_sort_basis: sort_basis
+        }
+    }
 }
 
 // TODO: DOC.
@@ -42,7 +54,7 @@ impl<'a, T: GASolution> GASelector<'a, T> for GARankSelector<'a, T>
         self.population = population;
     }
 
-    fn select(&mut self, pop_sort_basis: GAPopulationSortBasis) -> &T
+    fn select(&mut self) -> &T
     {
         // Number of individuals that share best score/fitness.
         let mut best_count;
@@ -51,7 +63,7 @@ impl<'a, T: GASolution> GASelector<'a, T> for GARankSelector<'a, T>
         // ga_populations? Ideally, pop_sort_basis would be passed to sort().
         self.population.sort();
 
-        match pop_sort_basis
+        match self.pop_sort_basis
         {
             GAPopulationSortBasis::Raw
             =>  {
@@ -74,6 +86,10 @@ impl<'a, T: GASolution> GASelector<'a, T> for GARankSelector<'a, T>
 
                         best_count = best_count + 1;
                     }
+
+                    // Select any individual from those that share best score.
+                    self.population.individual(ga_random::ga_random_range(0, best_count),
+                                               GAPopulationSortBasis::Raw)
                 } 
 
             GAPopulationSortBasis::Scaled
@@ -91,10 +107,34 @@ impl<'a, T: GASolution> GASelector<'a, T> for GARankSelector<'a, T>
 
                         best_count = best_count + 1;
                     }
-                }
-        };
 
-        // Select any individual from those that share best score/fitness.
-        self.population.individual(ga_random::ga_random_range(0, best_count), pop_sort_basis)
+                    // Select any individual from those that share best fitness.
+                    self.population.individual(ga_random::ga_random_range(0, best_count),
+                                               GAPopulationSortBasis::Scaled) 
+                }
+        }
+    }
+}
+
+pub struct GAUniformSelector<'a, T: 'a + GASolution>
+{
+    population: &'a mut GAPopulation<T>
+}
+
+impl<'a, T: GASolution> GASelector<'a, T> for GAUniformSelector<'a, T>
+{
+    fn assign(&mut self, population: &'a mut GAPopulation<T>)
+    {
+        self.population = population;
+    }
+
+    // Select any individual at random.
+    fn select(&mut self) -> &T
+    {
+        // Since selection is at random, it doesn't matter where the individual
+        // is drawn from, the Raw/score-sorted or the Scaled/fitness-sorted list.
+        self.population.individual(
+            ga_random::ga_random_range(0, self.population.size()),
+            GAPopulationSortBasis::Raw)
     }
 }
