@@ -216,6 +216,7 @@ mod tests
 
         let mut uniform_selector = GAUniformSelector::new(&mut population);
 
-        assert!(uniform_selector.select().score() == f || uniform_selector.select().score() == f_m);  
+        let selected_individual = uniform_selector.select();
+        assert!(selected_individual.score() == f || selected_individual.score() == f_m);  
     }
 }
