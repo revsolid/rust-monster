@@ -121,6 +121,17 @@ pub struct GAUniformSelector<'a, T: 'a + GASolution>
     population: &'a mut GAPopulation<T>
 }
 
+impl<'a, T: GASolution> GAUniformSelector<'a, T>
+{
+    pub fn new(p: &'a mut GAPopulation<T>) -> GAUniformSelector<'a, T>
+    {
+        GAUniformSelector
+        {
+            population: p
+        }
+    }
+}
+
 impl<'a, T: GASolution> GASelector<'a, T> for GAUniformSelector<'a, T>
 {
     fn assign(&mut self, population: &'a mut GAPopulation<T>)
@@ -131,6 +142,13 @@ impl<'a, T: GASolution> GASelector<'a, T> for GAUniformSelector<'a, T>
     // Select any individual at random.
     fn select(&mut self) -> &T
     {
+        // Need to sort first, because GAPopulation.individual() draws individuals
+        // from the sorted lists.
+        // TODO: GAPopulation should implement a method for selecting individuals
+        // from the unsorted vector; GAUniformSelector would use it, because it
+        // doesn't care about the order.
+        self.population.sort();
+
         // Since selection is at random, it doesn't matter where the individual
         // is drawn from, the Raw/score-sorted or the Scaled/fitness-sorted list.
         self.population.individual(
