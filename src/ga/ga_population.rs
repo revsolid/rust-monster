@@ -42,8 +42,6 @@ pub struct GAPopulation<T: GASolution>
 }
 impl<T: GASolution> GAPopulation<T>
 {
-    // Need best() and sort() for Selectors.
-
     // TODO: New should use some parameters, maybe a Config
     pub fn new(p: Vec<T>, order: GAPopulationSortOrder) -> GAPopulation<T>
     {
