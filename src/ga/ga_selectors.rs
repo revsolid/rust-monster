@@ -17,6 +17,43 @@ pub trait GASelector<'a, T: GASolution>
     fn select(&mut self) -> &T;
 }
 
+pub trait GAScoreTypeBasedSelection<T: GASolution>
+{
+    fn score(&self, individual: &T) -> f32;
+
+    fn population_sort_basis(&self) -> GAPopulationSortBasis;
+}
+
+pub struct GARawScoreBasedSelection;
+
+impl<T: GASolution> GAScoreTypeBasedSelection<T> for GARawScoreBasedSelection
+{
+    fn score(&self, individual: &T) -> f32
+    {
+        individual.score()
+    }
+
+    fn population_sort_basis(&self) -> GAPopulationSortBasis
+    {
+        GAPopulationSortBasis::Raw
+    }
+}
+
+pub struct GAScaledScoreBasedSelection;
+
+impl<T: GASolution> GAScoreTypeBasedSelection<T> for GAScaledScoreBasedSelection
+{
+    fn score(&self, individual: &T) -> f32
+    {
+        individual.fitness()
+    }
+
+    fn population_sort_basis(&self) -> GAPopulationSortBasis
+    {
+        GAPopulationSortBasis::Scaled
+    }
+}
+
 // GASolution-s live as long as the population. Lifetime 'a is bound to the
 // population borrowed by the 'population' member, as well as to the enclosed
 // GASolution-s, because they share the same memory.
@@ -28,20 +65,20 @@ pub struct GARankSelector<'a, T: 'a + GASolution>
     //    to borrow it, not even in non-mut mode according to the rules.
     // Selectors modify populations (they sort them, for instance), so the
     // reference must be 'mut'.
-    // TODO: Implement new() function and drop 'pub' from 'population'.
-    pub population: &'a mut GAPopulation<T>,
+    population: &'a mut GAPopulation<T>,
 
-    pop_sort_basis: GAPopulationSortBasis
+    // TODO: Check correct lifetime.
+    score_type_selection: &'a GAScoreTypeBasedSelection<T>
 }
 
 impl<'a, T: GASolution> GARankSelector<'a, T>
 {
-    pub fn new(p: &'a mut GAPopulation<T>, sort_basis: GAPopulationSortBasis) -> GARankSelector<'a, T>
+    pub fn new(p: &'a mut GAPopulation<T>, s: &'a GAScoreTypeBasedSelection<T>) -> GARankSelector<'a, T>
     {
         GARankSelector
         {
             population: p,
-            pop_sort_basis: sort_basis
+            score_type_selection: s
         }
     }
 }
@@ -56,63 +93,31 @@ impl<'a, T: GASolution> GASelector<'a, T> for GARankSelector<'a, T>
 
     fn select(&mut self) -> &T
     {
-        // Number of individuals that share best score/fitness.
-        let mut best_count;
+        // TODO: Confirm assumption that population has 1 individual at least.
+        // Number of individuals that share best score.
+        let mut best_count = 1;
 
-        // Q: sort_int() is pub, but is it meant to be called outside of 
-        // ga_populations? Ideally, pop_sort_basis would be passed to sort().
         self.population.sort();
 
-        match self.pop_sort_basis
+        // TODO: Use best() when implemented.
+        // Q: Should individual() (ith_best()) return an optional or
+        //    does it guarantee that it will always return something valid?
+        //    What if the population is still empty?
+        let best_score: f32 = self.score_type_selection.score(self.population.individual(0, self.score_type_selection.population_sort_basis()));
+
+        // Skip 0th best.
+        for i in 1..self.population.size()
         {
-            GAPopulationSortBasis::Raw
-            =>  {
-                    // Currently, individual(i, sort_basis) returns the ith-best
-                    // individual, sort_basis-ordered.
-                    // Q: Should individual() (ith_best()) return an optional or
-                    //    does it guarantee that it will always return something valid?
-                    //    What if the population is still empty?
-                    let best_score: f32 = self.population.individual(0, GAPopulationSortBasis::Raw).score();
+            if self.score_type_selection.score(self.population.individual(i, self.score_type_selection.population_sort_basis())) != best_score
+            {
+                break;
+            }
 
-                    best_count = 1;
-
-                    // Skip 0th best.
-                    for i in 1..self.population.size()
-                    {
-                        if self.population.individual(i, GAPopulationSortBasis::Raw).score()  != best_score
-                        {
-                            break;
-                        }
-
-                        best_count = best_count + 1;
-                    }
-
-                    // Select any individual from those that share best score.
-                    self.population.individual(ga_random::ga_random_range(0, best_count),
-                                               GAPopulationSortBasis::Raw)
-                } 
-
-            GAPopulationSortBasis::Scaled
-            =>  {
-                    let best_fitness: f32 = self.population.individual(0, GAPopulationSortBasis::Scaled).fitness();
-
-                    best_count = 1;
-
-                    for i in 1..self.population.size()
-                    {
-                        if self.population.individual(i, GAPopulationSortBasis::Scaled).fitness() != best_fitness
-                        {
-                            break;
-                        }
-
-                        best_count = best_count + 1;
-                    }
-
-                    // Select any individual from those that share best fitness.
-                    self.population.individual(ga_random::ga_random_range(0, best_count),
-                                               GAPopulationSortBasis::Scaled) 
-                }
+            best_count = best_count + 1;
         }
+
+        // Select any individual from those that share best score.
+        self.population.individual(ga_random::ga_random_range(0, best_count), self.score_type_selection.population_sort_basis())
     }
 }
 
@@ -156,3 +161,52 @@ impl<'a, T: GASolution> GASelector<'a, T> for GAUniformSelector<'a, T>
             GAPopulationSortBasis::Raw)
     }
 }
+
+//pub struct GARouletteWheelSelector<'a, T: 'a + GASolution>
+//{
+//    population: &'a mut GAPopulation<T>,
+//
+//    pop_sort_basis: GAPopulationSortBasis,
+//
+//    wheel_proportions: Vec<f32>,
+//
+//    wheel_is_dirty: bool
+//}
+//
+//impl<'a, T: GASolution> GASelector<'a, T> for GARouletteWheelSelector<'a, T>
+//{
+//    fn assign(&mut self, population: &'a mut GAPopulation<T>)
+//    {
+//        self.population = population;
+//
+//        if self.population.size() != self.wheel_proportions.len()
+//        {
+//            self.wheel_proportions.resize(self.population.size(), 0.0);
+//        }
+//
+//        self.wheel_is_dirty = true;
+//    }
+//
+//    fn select(&mut self) -> &T
+//    {
+//        // Dummy.
+//        self.population.individual(0, GAPopulationSortBasis::Raw)
+//    }
+//
+//    fn update(&mut self)
+//    {
+//        // TODO: Replace with cached stats when implemented.
+//        // TODO: Replace with best() and worst() once there is one for Raw and one for Scaled.
+//        let max =  match self.pop_sort_basis
+//                   { 
+//                        GAPopulationSortBasis::Raw    => self.population.individual(0, GAPopulationSortBasis::Raw).score(),
+//                        GAPopulationSortBasis::Scaled => self.population.individual(0, GAPopulationSortBasis::Scaled).fitness()
+//                   };
+//
+//        let min =  match self.pop_sort_basis 
+//                   {
+//                        GAPopulationSortBasis::Raw    => self.population.individual(self.population.size()-1, GAPopulationSortBasis::Raw).score(),
+//                        GAPopulationSortBasis::Scaled => self.population.individual(self.population.size()-1, GAPopulationSortBasis::Scaled).fitness()
+//                   };
+//    }
+//}
