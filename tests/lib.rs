@@ -11,7 +11,7 @@ mod tests
     use rust_monster::ga::ga_core::{GeneticAlgorithm, GASolution, GAFactory, DEBUG_FLAG};
     use rust_monster::ga::ga_population::{GAPopulation, GAPopulationSortOrder, GAPopulationSortBasis};
     use rust_monster::ga::ga_simple::{SimpleGeneticAlgorithm, SimpleGeneticAlgorithmCfg};
-    use rust_monster::ga::ga_selectors::{GASelector, GARankSelector, GAUniformSelector};
+    use rust_monster::ga::ga_selectors::{GASelector, GARankSelector, GAUniformSelector, GARawScoreBasedSelection, GAScaledScoreBasedSelection};
 
     use env_logger;
     use std::sync::{Once, ONCE_INIT};
@@ -189,14 +189,16 @@ mod tests
                               GAPopulationSortOrder::HighIsBest);
 
         {
-            let mut raw_rank_selector = GARankSelector::new(&mut population, GAPopulationSortBasis::Raw);
+            let raw_score_selection = GARawScoreBasedSelection;
+            let mut raw_rank_selector = GARankSelector::new(&mut population, &raw_score_selection);
 
             // Best Raw score is that of 1st solution.
             assert_eq!(raw_rank_selector.select().score(), f);
         }
 
         {
-            let mut scaled_rank_selector = GARankSelector::new(&mut population, GAPopulationSortBasis::Scaled);
+            let scaled_score_selection = GAScaledScoreBasedSelection;
+            let mut scaled_rank_selector = GARankSelector::new(&mut population, &scaled_score_selection);
 
             // Best Scaled score is that of 2nd solution (because fitness is inverse of score). Weird. In this case, LowIsBest.
             assert_eq!(scaled_rank_selector.select().fitness(), i_f_m);
