@@ -2,6 +2,7 @@
 use super::ga_core::GASolution;
 use super::ga_population::{GAPopulation, GAPopulationSortBasis, GAPopulationSortOrder};
 use super::ga_random;
+use std::cmp;
 
 /// Selector Trait
 ///
@@ -183,6 +184,7 @@ pub struct GARouletteWheelSelector<'a, T: 'a + GASolution>
 
     wheel_proportions: Vec<f32>,
 
+    // TODO: Remove if not useful.
     wheel_is_dirty: bool
 }
 
@@ -223,12 +225,39 @@ impl<'a, T: GASolution> GASelector<'a, T> for GARouletteWheelSelector<'a, T>
 
     fn select(&mut self) -> &T
     {
-        // Dummy.
-        self.population.individual(0, GAPopulationSortBasis::Raw)
+        // TODO: Cache this value? Or Vec already caches it?
+        let wheel_slots = self.wheel_proportions.len();
+        let cutoff = ga_random::ga_random_float();
+        let mut lower = 0;
+        let mut upper = wheel_slots-1;
+        let mut i;
+
+        while upper >= lower
+        {
+            i = lower + (upper-lower)/2;
+
+            assert!(i >= 0 && i < wheel_slots);
+
+            if self.wheel_proportions[i] > cutoff
+            {
+                upper = i-1;
+            }
+            else
+            {
+                lower = i+1;
+            }
+        }
+
+        lower = cmp::min(wheel_slots-1, lower);
+        lower = cmp::max(0, lower);
+
+        self.population.individual(lower, self.score_selection.population_sort_basis())
     }
 
     fn update(&mut self)
     {
+        // TODO: Can a population grow? If it can, need to resize the wheel.
+
         let wheel_slots = self.wheel_proportions.len();
         let max_score = self.score_selection.max_score(self.population);
         let min_score = self.score_selection.min_score(self.population);
@@ -236,7 +265,7 @@ impl<'a, T: GASolution> GASelector<'a, T> for GARouletteWheelSelector<'a, T>
         if max_score == min_score
         {
             // Upper bound is excluded.
-            for i in 0..wheel_slots
+            for i in 0 .. wheel_slots
             {
                 self.wheel_proportions[i] = ((i+1) as f32)/(wheel_slots as f32);
             }
@@ -257,7 +286,7 @@ impl<'a, T: GASolution> GASelector<'a, T> for GARouletteWheelSelector<'a, T>
                           = self.score_selection.score(
                               self.population.individual(0, population_sort_basis));
 
-                        for i in 1..wheel_slots
+                        for i in 1 .. wheel_slots
                         {
                             self.wheel_proportions[i]
                               = self.score_selection.score(
@@ -265,7 +294,7 @@ impl<'a, T: GASolution> GASelector<'a, T> for GARouletteWheelSelector<'a, T>
                                 + self.wheel_proportions[i-1]; 
                         }
 
-                        for i in 1..wheel_slots
+                        for i in 0 .. wheel_slots
                         {
                             self.wheel_proportions[i] 
                               /= self.wheel_proportions[wheel_slots-1];
@@ -278,22 +307,26 @@ impl<'a, T: GASolution> GASelector<'a, T> for GARouletteWheelSelector<'a, T>
                                self.population.individual(0, population_sort_basis)) 
                             + max_score + min_score;
 
-                        for i in 1..wheel_slots
+                        for i in 1 .. wheel_slots
                         {
                             self.wheel_proportions[i] 
                               = -self.score_selection.score(
                                    self.population.individual(i, population_sort_basis))
                                 + max_score + min_score 
-                                + self.wheel_proportions[wheel_slots-1]; 
+                                + self.wheel_proportions[i-1]; 
                         }
 
-                        for i in 1..wheel_slots
+                        for i in 0 .. wheel_slots
                         {
                             self.wheel_proportions[i]
                               /= self.wheel_proportions[wheel_slots-1];
                         }
                     }
             }
+        }
+        else
+        {
+            // TODO: Raise error.
         }
     }
 }
