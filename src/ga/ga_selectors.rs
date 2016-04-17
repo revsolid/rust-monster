@@ -234,6 +234,8 @@ impl<'a, T: GASolution> GASelector<'a, T> for GARouletteWheelSelector<'a, T>
     {
         // TODO: Can a population grow? If it can, need to resize the wheel.
 
+        self.population.sort();
+
         let wheel_slots = self.wheel_proportions.len();
         let max_score = self.score_selection.max_score(self.population);
         let min_score = self.score_selection.min_score(self.population);
@@ -251,8 +253,6 @@ impl<'a, T: GASolution> GASelector<'a, T> for GARouletteWheelSelector<'a, T>
         {
             // This is not a move, but a copy.
             let population_sort_basis = self.score_selection.population_sort_basis();
-
-            self.population.sort();
 
             match self.population.order()
             {
