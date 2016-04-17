@@ -11,7 +11,8 @@ mod tests
     use rust_monster::ga::ga_core::{GeneticAlgorithm, GASolution, GAFactory, DEBUG_FLAG};
     use rust_monster::ga::ga_population::{GAPopulation, GAPopulationSortOrder, GAPopulationSortBasis};
     use rust_monster::ga::ga_simple::{SimpleGeneticAlgorithm, SimpleGeneticAlgorithmCfg};
-    use rust_monster::ga::ga_selectors::{GASelector, GARankSelector, GAUniformSelector, GARawScoreBasedSelection, GAScaledScoreBasedSelection};
+    use rust_monster::ga::ga_selectors::{GASelector, GARankSelector, GAUniformSelector, GARouletteWheelSelector, GATournamentSelector, GARawScoreBasedSelection, GAScaledScoreBasedSelection};
+    use rust_monster::ga::ga_random;
 
     use env_logger;
     use std::sync::{Once, ONCE_INIT};
@@ -192,6 +193,8 @@ mod tests
             let raw_score_selection = GARawScoreBasedSelection;
             let mut raw_rank_selector = GARankSelector::new(&mut population, &raw_score_selection);
 
+            raw_rank_selector.update();
+
             // Best Raw score is that of 1st solution.
             assert_eq!(raw_rank_selector.select().score(), f);
         }
@@ -199,6 +202,8 @@ mod tests
         {
             let scaled_score_selection = GAScaledScoreBasedSelection;
             let mut scaled_rank_selector = GARankSelector::new(&mut population, &scaled_score_selection);
+
+            scaled_rank_selector.update();
 
             // Best Scaled score is that of 2nd solution (because fitness is inverse of score). Weird. In this case, LowIsBest.
             assert_eq!(scaled_rank_selector.select().fitness(), i_f_m);
@@ -218,7 +223,90 @@ mod tests
 
         let mut uniform_selector = GAUniformSelector::new(&mut population);
 
+        uniform_selector.update();
+
         let selected_individual = uniform_selector.select();
         assert!(selected_individual.score() == f || selected_individual.score() == f_m);  
     }
+
+    #[test]
+    #[allow(unused_variables)]
+    fn test_roulette_wheel_selector()
+    {
+        // Just exercise the code.
+        // TODO: How to test when there is randomness?
+
+        let mut individuals = vec![];
+
+        for i in 1 .. 20
+        {
+            individuals.push(TestSolution { fitness: ga_random::ga_random_float() });
+        }
+
+        let mut population
+          = GAPopulation::new(individuals, GAPopulationSortOrder::LowIsBest);
+
+        {
+            let raw_score_selection = GARawScoreBasedSelection;
+
+            let mut raw_roulette_wheel_selector 
+              = GARouletteWheelSelector::new(&mut population, &raw_score_selection);
+
+            raw_roulette_wheel_selector.update();
+
+            raw_roulette_wheel_selector.select();
+        }
+
+        {
+            let scaled_score_selection = GAScaledScoreBasedSelection;
+
+            let mut scaled_roulette_wheel_selector 
+              = GARouletteWheelSelector::new(&mut population, &scaled_score_selection);
+
+            scaled_roulette_wheel_selector.update();
+
+            scaled_roulette_wheel_selector.select();
+        }
+    }
+
+    #[test]
+    #[allow(unused_variables)]
+    fn test_tournament_selector()
+    {
+        // Just exercise the code.
+        // TODO: How to test when there is randomness?
+
+        let mut individuals = vec![];
+
+        for i in 1 .. 20
+        {
+            individuals.push(TestSolution { fitness: ga_random::ga_random_float() });
+        }
+
+        let mut population
+          = GAPopulation::new(individuals, GAPopulationSortOrder::LowIsBest);
+
+        {
+            let raw_score_selection = GARawScoreBasedSelection;
+
+            let mut raw_tournament_selector 
+              = GARouletteWheelSelector::new(&mut population, &raw_score_selection);
+
+            raw_tournament_selector.update();
+
+            raw_tournament_selector.select();
+        }
+
+        {
+            let scaled_score_selection = GAScaledScoreBasedSelection;
+
+            let mut scaled_tournament_selector 
+              = GARouletteWheelSelector::new(&mut population, &scaled_score_selection);
+
+            scaled_tournament_selector.update();
+
+            scaled_tournament_selector.select();
+        }
+    }
+
 }
