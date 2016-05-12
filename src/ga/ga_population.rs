@@ -6,13 +6,16 @@ use std::cmp::Ordering;
 use std::iter::FromIterator;
 
 // Better name than 'Basis'?
+#[derive(Clone, Copy)]
 pub enum GAPopulationSortBasis
 {
     Raw,
     Scaled,
 }
 
-// Isn't a boolean enough?
+// The 'Copy' trait requires the 'Clone' trait.
+// 'Copy' removes the 'move' semantics from an assignment or a function return of value.
+#[derive(Clone, Copy)]
 pub enum GAPopulationSortOrder
 {
     LowIsBest,
@@ -42,8 +45,6 @@ pub struct GAPopulation<T: GASolution>
 }
 impl<T: GASolution> GAPopulation<T>
 {
-    // Need best() and sort() for Selectors.
-
     // TODO: New should use some parameters, maybe a Config
     pub fn new(p: Vec<T>, order: GAPopulationSortOrder) -> GAPopulation<T>
     {
@@ -78,6 +79,14 @@ impl<T: GASolution> GAPopulation<T>
         self.population.len()
     }
 
+    pub fn order(&self) -> GAPopulationSortOrder
+    {
+        // This is not a 'move', but a copy (GAPopulationSortOrder implements the
+        // 'Copy' trait). A move from a borrowed reference (such as 'self') would 
+        // not be permitted.
+        self.sort_order
+    }
+
     //TODO: this is a temporary implementation
     pub fn select(&self) -> &T
     {
@@ -87,6 +96,8 @@ impl<T: GASolution> GAPopulation<T>
     //TODO: This is a temporary implementation 
     pub fn best(&self) -> &T
     {
+        // TODO: Call GAPopulation.scale().
+
         self.individual(0, GAPopulationSortBasis::Scaled)
     }
 
