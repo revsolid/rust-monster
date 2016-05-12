@@ -319,7 +319,7 @@ impl<'a, T: GASolution> GASelector<'a, T> for GARouletteWheelSelector<'a, T>
         {
             i = lower + (upper-lower)/2;
 
-            assert!(i >= 0 && i < wheel_slots);
+            assert!(i < wheel_slots);
 
             if self.wheel_proportions[i] > cutoff
             {

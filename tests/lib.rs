@@ -11,7 +11,7 @@ mod tests
     use rust_monster::ga::ga_core::{GeneticAlgorithm, GASolution, GAFactory, DEBUG_FLAG};
     use rust_monster::ga::ga_population::{GAPopulation, GAPopulationSortOrder, GAPopulationSortBasis};
     use rust_monster::ga::ga_simple::{SimpleGeneticAlgorithm, SimpleGeneticAlgorithmCfg};
-    use rust_monster::ga::ga_selectors::{GASelector, GARankSelector, GAUniformSelector, GARouletteWheelSelector, GATournamentSelector, GARawScoreBasedSelection, GAScaledScoreBasedSelection};
+    use rust_monster::ga::ga_selectors::*;
     use rust_monster::ga::ga_random;
 
     use env_logger;
