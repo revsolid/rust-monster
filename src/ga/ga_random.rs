@@ -1,28 +1,48 @@
-// TODO: COPYRIGHT, USE & AUTHORS
-// TODO: RUST DOCS!
+// Copyright 2016 Revolution Solid & Contributors.
+// author(s): sysnett
+// rust-monster is licensed under an MIT License.
 
-/// GA Random Numbers Util
-///
-/// Wrapper around the rand crate
-///
-use rand::{random, XorShiftRng, Rng, SeedableRng, thread_rng};
+//! GA Random Numbers Util
+//!
+//! Wrapper around the rand crate that provides a Seeded
+//! and Stateful Random Number Generator.
+//!
+//! Internally uses rand::XorShiftRng for speed purposes.
+//!
+//! # Examples
+//!
+//! GARandomCtx - Basic Use case
+//! 
+//! ```rust
+//! extern crate rust_monster;
+//! use rust_monster::ga; 
+//! use rust_monster::ga::ga_random; 
+//! 
+//! fn main ()
+//! {
+//!     let seed : ga_random::GASeed = [1,2,3,4];
+//!
+//!     let mut ga_ctx = ga_random::GARandomCtx::from_seed(seed, String::from("MyRandomCtx")); 
+//!
+//!     println!("{:?}", ga_ctx.gen::<f32>());
+//!
+//!     println!("{:?}", ga_ctx);
+//! }
+//! ```
+//!
+use rand::{random, thread_rng, Rng, Rand, SeedableRng, XorShiftRng};
 use rand::distributions::range::SampleRange;
 
-const kGASeedSize : usize = 4;
+use std::fmt;
 
-
-/// GARandomCtx
-///
-/// Seeded and Stateful Random Number Generator.
-/// Uses rand::XorShiftRng for speed purposes.
-///
-struct GARandomCtx
+pub type GASeed = [u32; 4];
+pub struct GARandomCtx
 {
-    seed: [u32; kGASeedSize],
+    seed: GASeed,
     rng:  XorShiftRng,
     name: String,
     seeded: bool,
-    values_genarated: u32
+    values_generated: u32
 }
 
 impl GARandomCtx
@@ -33,14 +53,15 @@ impl GARandomCtx
         let std_rng = XorShiftRng::new_unseeded();
         GARandomCtx
         {
-            seed: [0 ; kGASeedSize],
+            seed: [0; 4],
             rng: std_rng,
             name: name,
-            seeded: false 
+            seeded: false,
+            values_generated: 0
         }
     }
 
-    pub fn from_seed(seed: [u32; kGASeedSize], name : String) -> GARandomCtx
+    pub fn from_seed(seed: GASeed, name: String) -> GARandomCtx
     {
         let std_rng = SeedableRng::from_seed(seed); 
         GARandomCtx
@@ -48,39 +69,44 @@ impl GARandomCtx
             seed: seed,
             rng:  std_rng,
             name: name,
-            seeded: true
+            seeded: true,
+            values_generated: 0
         }
     }
 
-// Random Values
-    pub fn random_float(&mut self) -> f32
+// Random Values - Subset of the RNG Trait
+    pub fn gen<T: Rand>(&mut self) -> T where Self: Sized
     {
-        self.rng.gen::<f32>() 
+        self.values_generated += 1;
+        self.rng.gen()
     }
 
-    pub fn random_float_test(&mut self, v: f32) -> bool
+    pub fn gen_range<T: PartialOrd + SampleRange>(&mut self, low: T, high: T) -> T
     {
-        self.random_float() < v
-    }
-
-    pub fn random_range<T: PartialOrd + SampleRange>(&mut self, low: T, high: T) -> T
-    {
+        self.values_generated += 1;
         self.rng.gen_range(low, high)
     }
 
+    pub fn next_u32(&mut self) -> u32 { self.gen::<u32>() }
+    pub fn next_u64(&mut self) -> u64 { self.gen::<u64>() }
+    pub fn next_f32(&mut self) -> f32 { self.gen::<f32>() }
+    pub fn next_f64(&mut self) -> f64 { self.gen::<f64>() }
+
 
 // Reset State
-    pub fn reseed(&mut self, seed: [u32; kGASeedSize])
+    pub fn reseed(&mut self, seed: GASeed)
     {
         self.seed = seed;
-        self.rng.reseed(self.seed);
+        self.seeded = true;
+        self.reset();
     }
 
     pub fn reset(&mut self)
     {
+        self.values_generated = 0;
         if self.seeded
         {
-            self.rng = SeedableRng::from_seed(self.seed);
+            self.rng.reseed(self.seed);
         }
         else
         {
@@ -93,10 +119,82 @@ impl fmt::Debug for GARandomCtx
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result
     {
-        write!(f, "GARandomCtx {{ x: {}, y: {} }}", self.x, self.y)
+        let seeded_str = if self.seeded
+            {
+                "Seeded"
+            }
+            else
+            {
+                "Not Seeded"
+            };
+
+        write!(f, "GARandomCtx {} - {} {{ seed: {:?}, values_generated: {:?} }}",
+               self.name,
+               seeded_str,
+               self.seed,
+               self.values_generated)
     }
 }
 
+#[cfg(test)]
+mod test
+{
+    extern crate env_logger;
+    use super::{GASeed, GARandomCtx};
+
+    #[test]
+    fn same_seed()
+    {
+        let _ = env_logger::init();
+        let seed : GASeed = [1,2,3,4];
+        let mut ga_ctx = GARandomCtx::from_seed(seed, String::from("TestRandomCtx")); 
+        let mut ga_ctx_2 = GARandomCtx::from_seed(seed, String::from("TestRandomCtx2")); 
+        debug!("{:?}", ga_ctx);
+        debug!("{:?}", ga_ctx_2);
+
+        for _ in 0..100
+        {
+            assert_eq!(ga_ctx.gen::<f64>(), ga_ctx_2.gen::<f64>());
+        }
+        debug!("{:?}", ga_ctx);
+        debug!("{:?}", ga_ctx_2);
+
+        for _ in 0..100
+        {
+            assert_eq!(ga_ctx.gen::<u32>(), ga_ctx_2.gen::<u32>());
+        }
+        debug!("{:?}", ga_ctx);
+        debug!("{:?}", ga_ctx_2);
+    }
+
+    #[test]
+    fn diff_seed()
+    {
+        let _ = env_logger::init();
+        let seed_1 : GASeed = [1,2,3,4];
+        let seed_2 : GASeed = [4,3,2,1];
+        let mut ga_ctx = GARandomCtx::from_seed(seed_1, String::from("TestRandomCtx")); 
+        let mut ga_ctx_2 = GARandomCtx::from_seed(seed_2, String::from("TestRandomCtx2")); 
+        debug!("{:?}", ga_ctx);
+        debug!("{:?}", ga_ctx_2);
+
+        for _ in 0..100
+        {
+            assert!(ga_ctx.gen::<f32>() != ga_ctx_2.gen::<f32>());
+        }
+        debug!("{:?}", ga_ctx);
+        debug!("{:?}", ga_ctx_2);
+
+        for _ in 0..100
+        {
+            assert!(ga_ctx.gen::<u64>() != ga_ctx_2.gen::<u64>());
+        }
+        debug!("{:?}", ga_ctx);
+        debug!("{:?}", ga_ctx_2);
+    }
+}
+
+// DEPRECATED
 
 pub fn ga_random_float() -> f32
 {
