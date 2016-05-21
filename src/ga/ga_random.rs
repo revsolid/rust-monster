@@ -92,6 +92,12 @@ impl GARandomCtx
     pub fn next_f32(&mut self) -> f32 { self.gen::<f32>() }
     pub fn next_f64(&mut self) -> f64 { self.gen::<f64>() }
 
+// Random Values - GARandomCtx functions
+    pub fn test_value<T: PartialOrd + Rand>(&mut self, value: T) -> bool 
+    {
+        self.gen::<T>() < value
+    }
+
 
 // Reset State
     pub fn reseed(&mut self, seed: GASeed)

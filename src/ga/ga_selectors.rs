@@ -1,7 +1,7 @@
 // TODO: COPYRIGHT, USE & AUTHORS
 use super::ga_core::GASolution;
 use super::ga_population::{GAPopulation, GAPopulationSortBasis, GAPopulationSortOrder};
-use super::ga_random;
+use super::ga_random::{GARandomCtx};
 use std::cmp;
 
 /// Selector Trait
@@ -15,7 +15,7 @@ pub trait GASelector<'a, T: GASolution>
     /// Some selectors implement an empty update().
     fn update(&mut self) {}
 
-    fn select(&self) -> &T;
+    fn select(&self, rng_ctx: &mut GARandomCtx) -> &T;
 }
 
 pub trait GAScoreTypeBasedSelection<T: GASolution>
@@ -109,7 +109,7 @@ impl<'a, T: GASolution> GASelector<'a, T> for GARankSelector<'a, T>
         self.population.sort();
     }
 
-    fn select(&self) -> &T
+    fn select(&self, rng_ctx: &mut GARandomCtx) -> &T
     {
         // TODO: Confirm assumption that population has 1 individual at least.
         // Number of individuals that share best score.
@@ -136,7 +136,7 @@ impl<'a, T: GASolution> GASelector<'a, T> for GARankSelector<'a, T>
         }
 
         // Select any individual from those that share best score.
-        self.population.individual(ga_random::ga_random_range(0, best_count), population_sort_basis)
+        self.population.individual(rng_ctx.gen_range(0, best_count), population_sort_basis)
     }
 }
 
@@ -171,12 +171,12 @@ impl<'a, T: GASolution> GASelector<'a, T> for GAUniformSelector<'a, T>
     }
 
     // Select any individual at random.
-    fn select(&self) -> &T
+    fn select(&self, rng_ctx: &mut GARandomCtx) -> &T
     {
         // Since selection is at random, it doesn't matter where the individual
         // is drawn from, the Raw/score-sorted or the Scaled/fitness-sorted list.
         self.population.individual(
-            ga_random::ga_random_range(0, self.population.size()),
+            rng_ctx.gen_range(0, self.population.size()),
             GAPopulationSortBasis::Raw)
     }
 }
@@ -306,16 +306,16 @@ impl<'a, T: GASolution> GASelector<'a, T> for GARouletteWheelSelector<'a, T>
         }
     }
 
-    fn select(&self) -> &T
+    fn select(&self, rng_ctx: &mut GARandomCtx) -> &T
     {
         // TODO: Cache this value? Or Vec already caches it?
         let wheel_slots = self.wheel_proportions.len();
-        let cutoff = ga_random::ga_random_float();
+        let cutoff = rng_ctx.gen::<f32>();
         let mut lower = 0;
         let mut upper = wheel_slots-1;
         let mut i;
 
-        while upper >= lower
+        while upper > lower
         {
             i = lower + (upper-lower)/2;
 
@@ -323,7 +323,14 @@ impl<'a, T: GASolution> GASelector<'a, T> for GARouletteWheelSelector<'a, T>
 
             if self.wheel_proportions[i] > cutoff
             {
-                upper = i-1;
+                if i > 0
+                {
+                    upper = i-1;
+                }
+                else
+                {
+                    upper = 0;
+                }
             }
             else
             {
@@ -377,16 +384,16 @@ impl<'a, T: GASolution> GASelector<'a, T> for GATournamentSelector<'a, T>
         self.roulette_wheel_selector.update();
     }
 
-    fn select(&self) -> &T
+    fn select(&self, rng_ctx: &mut GARandomCtx) -> &T
     {
         let low_score_individual;
         let high_score_individual;
         let individual1;
         let individual2;
 
-        individual1 = self.roulette_wheel_selector.select();
+        individual1 = self.roulette_wheel_selector.select(rng_ctx);
 
-        individual2 = self.roulette_wheel_selector.select();
+        individual2 = self.roulette_wheel_selector.select(rng_ctx);
 
         if self.score_selection.score(individual1) 
            >= self.score_selection.score(individual2)

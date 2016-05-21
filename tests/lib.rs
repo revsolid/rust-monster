@@ -12,12 +12,10 @@ mod tests
     use rust_monster::ga::ga_population::{GAPopulation, GAPopulationSortOrder, GAPopulationSortBasis};
     use rust_monster::ga::ga_simple::{SimpleGeneticAlgorithm, SimpleGeneticAlgorithmCfg};
     use rust_monster::ga::ga_selectors::*;
-    use rust_monster::ga::ga_random;
+    use rust_monster::ga::ga_random::GARandomCtx;
 
     use env_logger;
-    use std::sync::{Once, ONCE_INIT};
 
-    static INIT: Once = ONCE_INIT;
     const VAL: f32 = 3.14159;
     
     struct TestSolution
@@ -56,13 +54,10 @@ mod tests
 ////////////////////////////////////////
 // Utility functions
 
-    fn ga_test_setup()
+    fn ga_test_setup(test_name: &str)
     {
-        // This is only called once, works nicely as a Setup mechanism
-        // TODO: Can we do somethign similar for teardown?
-        INIT.call_once(||{
-            env_logger::init().unwrap();
-        });
+        debug!("{:?}", test_name);
+        let _ =  env_logger::init();
     }
 
 
@@ -81,11 +76,11 @@ mod tests
     #[test]
     fn init_test_with_initial_population()
     {
-        ga_test_setup();
+        ga_test_setup("init_test_with_initial_population");
         let initial_population = GAPopulation::new(vec![TestSolution { fitness: VAL}], GAPopulationSortOrder::HighIsBest);
         let mut ga : SimpleGeneticAlgorithm<TestSolution> =
                      SimpleGeneticAlgorithm::new(SimpleGeneticAlgorithmCfg {
-                                                   d_seed : 1,
+                                                   d_seed : [1; 4],
                                                    flags : DEBUG_FLAG,
                                                    max_generations: 100,
                                                    ..Default::default()
@@ -99,11 +94,11 @@ mod tests
     #[test]
     fn init_test_with_factory()
     {
-        ga_test_setup();
+        ga_test_setup("init_test_with_factory");
         let mut factory = TestFactory { starting_fitness: VAL };
         let mut ga : SimpleGeneticAlgorithm<TestSolution> =
                      SimpleGeneticAlgorithm::new(SimpleGeneticAlgorithmCfg {
-                                                   d_seed : 1,
+                                                   d_seed : [1; 4],
                                                    flags : DEBUG_FLAG,
                                                    max_generations: 100,
                                                    ..Default::default()
@@ -119,10 +114,10 @@ mod tests
     #[allow(unused_variables)]
     fn init_test_missing_args()
     {
-        ga_test_setup();
+        ga_test_setup("init_test_missing_args");
         let ga : SimpleGeneticAlgorithm<TestSolution> =
                  SimpleGeneticAlgorithm::new(SimpleGeneticAlgorithmCfg {
-                                               d_seed : 1,
+                                               d_seed : [1; 4],
                                                flags : DEBUG_FLAG,
                                                max_generations: 100,
                                                ..Default::default()
@@ -137,11 +132,11 @@ mod tests
     #[should_panic]
     fn init_test_empty_initial_pop()
     {
-        ga_test_setup();
+        ga_test_setup("init_test_empty_initial_pop");
         let empty_initial_population : GAPopulation<TestSolution> = GAPopulation::new(vec![], GAPopulationSortOrder::HighIsBest);
         let mut ga : SimpleGeneticAlgorithm<TestSolution> =
                      SimpleGeneticAlgorithm::new(SimpleGeneticAlgorithmCfg {
-                                                   d_seed : 1,
+                                                   d_seed : [1; 4],
                                                    flags : DEBUG_FLAG,
                                                    max_generations: 100,
                                                    ..Default::default()
@@ -160,6 +155,7 @@ mod tests
     #[test]
     fn test_sort_population()
     {
+        ga_test_setup("test_sort_population");
         let f = VAL;
         let f_m = VAL - 1.0;
         let i_f = 1.0 / f;
@@ -179,6 +175,7 @@ mod tests
     #[allow(unused_variables)]
     fn test_rank_selector()
     {
+        ga_test_setup("test_rank_selector");
         let f = VAL;
         let f_m = VAL - 1.0;
         let i_f = 1.0 / f;
@@ -196,7 +193,7 @@ mod tests
             raw_rank_selector.update();
 
             // Best Raw score is that of 1st solution.
-            assert_eq!(raw_rank_selector.select().score(), f);
+            assert_eq!(raw_rank_selector.select(&mut GARandomCtx::new_unseeded(String::from("test_rank_selector_rng"))).score(), f);
         }
 
         {
@@ -206,13 +203,14 @@ mod tests
             scaled_rank_selector.update();
 
             // Best Scaled score is that of 2nd solution (because fitness is inverse of score). Weird. In this case, LowIsBest.
-            assert_eq!(scaled_rank_selector.select().fitness(), i_f_m);
+            assert_eq!(scaled_rank_selector.select(&mut GARandomCtx::new_unseeded(String::from("test_rank_selector_rng"))).fitness(), i_f_m);
         }
     }
 
     #[test]
     fn test_uniform_selector()
     {
+        ga_test_setup("test_uniform_selector");
         let f = VAL;
         let f_m = VAL - 1.0;
 
@@ -225,7 +223,7 @@ mod tests
 
         uniform_selector.update();
 
-        let selected_individual = uniform_selector.select();
+        let selected_individual = uniform_selector.select(&mut GARandomCtx::new_unseeded(String::from("test_rank_selector_rng")));
         assert!(selected_individual.score() == f || selected_individual.score() == f_m);  
     }
 
@@ -233,14 +231,17 @@ mod tests
     #[allow(unused_variables)]
     fn test_roulette_wheel_selector()
     {
+        ga_test_setup("test_roulette_wheel_selector");
         // Just exercise the code.
         // TODO: How to test when there is randomness?
 
         let mut individuals = vec![];
+        let mut rng_ctx = GARandomCtx::new_unseeded(String::from("test_roulette_wheel_selector_rng"));
+
 
         for i in 1 .. 20
         {
-            individuals.push(TestSolution { fitness: ga_random::ga_random_float() });
+            individuals.push(TestSolution { fitness: rng_ctx.gen::<f32>() });
         }
 
         let mut population
@@ -254,9 +255,9 @@ mod tests
 
             raw_roulette_wheel_selector.update();
 
-            raw_roulette_wheel_selector.select();
+            raw_roulette_wheel_selector.select(&mut rng_ctx);
         }
-
+        
         {
             let scaled_score_selection = GAScaledScoreBasedSelection;
 
@@ -265,7 +266,7 @@ mod tests
 
             scaled_roulette_wheel_selector.update();
 
-            scaled_roulette_wheel_selector.select();
+            scaled_roulette_wheel_selector.select(&mut rng_ctx);
         }
     }
 
@@ -276,11 +277,13 @@ mod tests
         // Just exercise the code.
         // TODO: How to test when there is randomness?
 
+        ga_test_setup("test_tournament_selector");
         let mut individuals = vec![];
+        let mut rng_ctx = GARandomCtx::new_unseeded(String::from("test_tournament_selector_rng"));
 
         for i in 1 .. 20
         {
-            individuals.push(TestSolution { fitness: ga_random::ga_random_float() });
+            individuals.push(TestSolution { fitness: rng_ctx.gen::<f32>() });
         }
 
         let mut population
@@ -294,7 +297,7 @@ mod tests
 
             raw_tournament_selector.update();
 
-            raw_tournament_selector.select();
+            raw_tournament_selector.select(&mut rng_ctx);
         }
 
         {
@@ -305,7 +308,7 @@ mod tests
 
             scaled_tournament_selector.update();
 
-            scaled_tournament_selector.select();
+            scaled_tournament_selector.select(&mut rng_ctx);
         }
     }
 
