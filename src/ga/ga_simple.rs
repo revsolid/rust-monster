@@ -1,14 +1,14 @@
 // TODO: COPYRIGHT, USE & AUTHORS
 use super::ga_core::{GAConfig, GAFactory, GAFlags, GeneticAlgorithm, GASolution};
 use super::ga_population::GAPopulation;
-use super::ga_random::ga_random_float_test;
+use super::ga_random::{GARandomCtx, GASeed};
 
 // Simple Genetic Algorithm Config
 #[derive(Copy, Clone, Default, Debug)]
 // TODO: RUST DOCS! 
 pub struct SimpleGeneticAlgorithmCfg
 {
-    pub d_seed : i32,
+    pub d_seed : GASeed,
     pub pconv  : f32,
     pub is_min : bool,
 
@@ -19,7 +19,7 @@ pub struct SimpleGeneticAlgorithmCfg
     pub probability_mutation    : f32,
 
     // Simple GA
-    pub elitism : bool
+    pub elitism : bool,
 }
 impl GAConfig for SimpleGeneticAlgorithmCfg
 {
@@ -66,14 +66,14 @@ impl SimpleGeneticAlgorithmCfg
 /// until the stopping criteria are met (determined by the terminator).
 ///
 /// Elitism is optional. By default, elitism is on, meaning that the best individual 
-/// from each generation is carried over to the next generation. To turn off elitism, 
-/// pass gaFalse to the elitist member function. 
+/// from each generation is carried over to the next generation.
 ///
 pub struct SimpleGeneticAlgorithm<T: GASolution>
 {
   current_generation : i32, 
   config : SimpleGeneticAlgorithmCfg,
-  population : GAPopulation<T>
+  population : GAPopulation<T>,
+  rng_ctx : GARandomCtx,
 }
 impl<T: GASolution> SimpleGeneticAlgorithm<T>
 {
@@ -104,7 +104,8 @@ impl<T: GASolution> SimpleGeneticAlgorithm<T>
             }
         }
 
-        SimpleGeneticAlgorithm { current_generation: 0, config : cfg, population : p}
+        //TODO: Some sort of generator for the name of the rng would be good
+        SimpleGeneticAlgorithm { current_generation: 0, config : cfg, population : p, rng_ctx : GARandomCtx::from_seed(cfg.d_seed, String::from("")) }
     }
 }
 impl<T: GASolution> GeneticAlgorithm<T> for SimpleGeneticAlgorithm <T>
@@ -134,7 +135,7 @@ impl<T: GASolution> GeneticAlgorithm<T> for SimpleGeneticAlgorithm <T>
         {
             let ind = self.population.select();
             let mut new_ind = ind.clone();
-            if ga_random_float_test(self.config.probability_crossover())
+            if self.rng_ctx.test_value(self.config.probability_crossover())
             {
                 let ind_2 = self.population.select();
                 new_ind = ind.crossover(ind_2);
