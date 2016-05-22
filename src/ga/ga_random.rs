@@ -30,7 +30,7 @@
 //! }
 //! ```
 //!
-use rand::{random, thread_rng, Rng, Rand, SeedableRng, XorShiftRng};
+use rand::{Rng, Rand, SeedableRng, XorShiftRng};
 use rand::distributions::range::SampleRange;
 
 use std::fmt;
@@ -198,22 +198,16 @@ mod test
         debug!("{:?}", ga_ctx);
         debug!("{:?}", ga_ctx_2);
     }
-}
 
-// DEPRECATED
-
-pub fn ga_random_float() -> f32
-{
-    random()
-}
-
-// Return a random number from range [low, high).
-pub fn ga_random_range<T: PartialOrd + SampleRange>(low: T, high: T) -> T
-{
-    thread_rng().gen_range(low, high)
-}
-
-pub fn ga_random_float_test(v: f32) -> bool
-{
-    ga_random_float() < v
+    #[test]
+    fn same_seed_different_types()
+    {
+        let _ = env_logger::init();
+        let seed_1 = [1; 4];
+        let mut ga_ctx = GARandomCtx::from_seed(seed_1, String::from("TestRandomCtx")); 
+        let mut ga_ctx_2 = GARandomCtx::from_seed(seed_1, String::from("TestRandomCtx")); 
+        debug!("{:?}", ga_ctx.gen::<f32>()); 
+        debug!("{:?}", ga_ctx_2.gen::<i8>()); 
+        assert_eq!(ga_ctx.gen::<f32>(), ga_ctx_2.gen::<f32>());
+    }
 }

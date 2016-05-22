@@ -56,8 +56,8 @@ mod tests
 
     fn ga_test_setup(test_name: &str)
     {
-        debug!("{:?}", test_name);
         let _ =  env_logger::init();
+        debug!("{:?}", test_name);
     }
 
 

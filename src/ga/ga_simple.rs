@@ -66,8 +66,7 @@ impl SimpleGeneticAlgorithmCfg
 /// until the stopping criteria are met (determined by the terminator).
 ///
 /// Elitism is optional. By default, elitism is on, meaning that the best individual 
-/// from each generation is carried over to the next generation. To turn off elitism, 
-/// pass gaFalse to the elitist member function. 
+/// from each generation is carried over to the next generation.
 ///
 pub struct SimpleGeneticAlgorithm<T: GASolution>
 {
@@ -105,6 +104,7 @@ impl<T: GASolution> SimpleGeneticAlgorithm<T>
             }
         }
 
+        //TODO: Some sort of generator for the name of the rng would be good
         SimpleGeneticAlgorithm { current_generation: 0, config : cfg, population : p, rng_ctx : GARandomCtx::from_seed(cfg.d_seed, String::from("")) }
     }
 }
