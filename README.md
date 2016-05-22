@@ -8,11 +8,11 @@ This is a very early WIP.
 rust-monster uses [cargo](https://crates.io/) packet manager and build tool-chain.
 
 ### Building
->> cargo build
+$> cargo build
 
 ### Runing Tests
->> cargo tests
+$> cargo tests
 
 ### Running Tests with debug output
->>RUST_LOG=rust_monster=debug cargo tests 
+$>RUST_LOG=rust_monster=debug cargo tests 
 
