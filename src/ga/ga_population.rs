@@ -107,6 +107,26 @@ impl<T: GASolution> GAPopulation<T>
         self.individual(self.size()-1, GAPopulationSortBasis::Scaled)
     }
 
+    pub fn best_by_raw_score(&self) -> &T
+    {
+        self.individual(0, GAPopulationSortBasis::Raw)
+    }
+
+    pub fn worst_by_raw_score(&self) -> &T
+    {
+        self.individual(self.size()-1, GAPopulationSortBasis::Scaled)
+    }
+
+    pub fn best_by_scaled_score(&self) -> &T
+    {
+        self.individual(0, GAPopulationSortBasis::Raw)
+    }
+
+    pub fn worst_by_scaled_score(&self) -> &T
+    {
+        self.individual(self.size()-1, GAPopulationSortBasis::Scaled)
+    }
+
     pub fn individual(&self, i : usize, sort_basis : GAPopulationSortBasis) -> &T
     {
         // TODO: Check that i makes sense
