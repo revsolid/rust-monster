@@ -110,7 +110,7 @@ impl<T: GASolution> SimpleGeneticAlgorithm<T>
         SimpleGeneticAlgorithm { current_generation: 0, config : cfg, population : p, rng_ctx : GARandomCtx::from_seed(cfg.d_seed, String::from("")) }
     }
 }
-impl<T: GASolution> GeneticAlgorithm<T> for SimpleGeneticAlgorithm <T>
+impl<T: GASolution + Clone> GeneticAlgorithm<T> for SimpleGeneticAlgorithm <T>
 {
     fn config(&mut self) -> &GAConfig
     {
