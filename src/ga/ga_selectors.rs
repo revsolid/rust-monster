@@ -1,42 +1,75 @@
-// TODO: COPYRIGHT, USE & AUTHORS
+// Copyright 2016 Revolution Solid & Contributors.
+// author(s): carlos-lopez-garces, sysnett
+// rust-monster is licensed under an MIT License.
+
+//! GA Selectors
+//!
+//! A selector represents and performs a method of selection.
+//!
+//! Selection is the action of choosing solutions (individuals) of the current
+//! generation that will create offspring for the next generation.
+//!
+//! Selectors represent and perform a different method of selection each. The
+//! expectation is that the offspring solutions be fitter than their selected
+//! parents. For this reason, many of the selectors tend to choose the fitter
+//! most of the time. However, many of them acknowledge the need for selecting
+//! less fit solutions, too: A genetic operator (crossover, mutation) used on
+//! suboptimal solutions may sometimes produce a solution that is fitter than
+//! those that could be produced by optimal ones.
+//!
+//! Available selectors:
+//!
+//! `GARankSelector`
+//! `GAUniformSelector`
+//! `GARouletteWheelSelector`
+//! `GATournamentSelector`
+//!
+//! # Examples
 use super::ga_core::GASolution;
 use super::ga_population::{GAPopulation, GAPopulationSortBasis, GAPopulationSortOrder};
 use super::ga_random::{GARandomCtx};
 use std::cmp;
 
-/// Selector Trait
+/// Selector trait.
 ///
-/// Interface to Selection Schemes
+/// Selector common interface. Each selector implements a different method
+/// of selection and keeps and manages its own internal state.
 pub trait GASelector<'a, T: GASolution>
 {
-    /// Assign the population on which to operate
-    fn assign(&mut self, population: &'a mut GAPopulation<T>);
     /// Update internal state. 
-    /// Some selectors implement an empty update().
-    fn update(&mut self) {}
+    ///
+    /// NOOP default implementation for selectors that don't keep internal state.
+    fn update(&mut self, population: &mut GAPopulation<T>) {}
 
-    fn select(&self, rng_ctx: &mut GARandomCtx) -> &T;
+    /// Select an individual from the population. 
+    ///
+    /// Each selector implements a different method of selection. Randomization 
+    /// is a key aspect of all methods.
+    fn select(&self, population: &'a GAPopulation<T>, rng_ctx: &mut GARandomCtx) -> &'a T;
 }
 
+/// Selection score type basis.
+///
+/// Selectors are configured, at the time of creation, with the type of score
+/// {RAW, SCALED} they will use to perform selections. The type of score
+/// ultimately determines the function that will be invoked on the `GASolution`
+/// to obtain the score value of the configured type. `GAScoreTypeBasedSelection`
+/// objects provide a unified interface to the different score functions of a
+/// `GASolution`. Selectors use these objects to obtain score values of the
+/// configured type, without explicitly choosing between them based on
+/// `GAPopulationSortBasis`.
 pub trait GAScoreTypeBasedSelection<T: GASolution>
 {
     fn score(&self, individual: &T) -> f32;
 
     fn population_sort_basis(&self) -> GAPopulationSortBasis;
 
-    fn max_score(&self, population: &GAPopulation<T>) -> f32
-    {
-        // TODO: Knowing that best is at 0 is knowing too much.
-        self.score(population.individual(0, self.population_sort_basis()))
-    }
+    fn max_score(&self, population: &GAPopulation<T>) -> f32;
 
-    fn min_score(&self, population: &GAPopulation<T>) -> f32
-    {
-        // TODO: Knowing that worst is at size()-1 is knowing too much.
-        self.score(population.individual(population.size()-1, self.population_sort_basis()))
-    }
+    fn min_score(&self, population: &GAPopulation<T>) -> f32;
 }
 
+/// Selection based on RAW score.
 pub struct GARawScoreBasedSelection;
 
 impl<T: GASolution> GAScoreTypeBasedSelection<T> for GARawScoreBasedSelection
@@ -50,8 +83,19 @@ impl<T: GASolution> GAScoreTypeBasedSelection<T> for GARawScoreBasedSelection
     {
         GAPopulationSortBasis::Raw
     }
+
+    fn max_score(&self, population: &GAPopulation<T>) -> f32
+    {
+        self.score(population.best_by_raw_score())
+    }
+
+    fn min_score(&self, population: &GAPopulation<T>) -> f32
+    {
+        self.score(population.worst_by_raw_score())
+    }
 }
 
+/// Selection based on SCALED score.
 pub struct GAScaledScoreBasedSelection;
 
 impl<T: GASolution> GAScoreTypeBasedSelection<T> for GAScaledScoreBasedSelection
@@ -65,51 +109,46 @@ impl<T: GASolution> GAScoreTypeBasedSelection<T> for GAScaledScoreBasedSelection
     {
         GAPopulationSortBasis::Scaled
     }
+
+    fn max_score(&self, population: &GAPopulation<T>) -> f32
+    {
+        self.score(population.best_by_scaled_score())
+    }
+
+    fn min_score(&self, population: &GAPopulation<T>) -> f32
+    {
+        self.score(population.worst_by_scaled_score())
+    }
 }
 
-// GASolution-s live as long as the population. Lifetime 'a is bound to the
-// population borrowed by the 'population' member, as well as to the enclosed
-// GASolution-s, because they share the same memory.
+/// Rank selector.
+///
+/// Select the best individual of the population. If more than 1 share the
+/// best score, choose 1 among them at random.
 pub struct GARankSelector<'a, T: 'a + GASolution>
 {
-    // Q: How to make this member common to all GASelectors?
-    // Q: Will 'mut' make things more complex? When the rank selector is in
-    //    scope and borrowing the population, no other objects will be able
-    //    to borrow it, not even in non-mut mode according to the rules.
-    // Selectors modify populations (they sort them, for instance), so the
-    // reference must be 'mut'.
-    population: &'a mut GAPopulation<T>,
-
-    // TODO: Check correct lifetime.
     score_selection: &'a GAScoreTypeBasedSelection<T>
 }
 
 impl<'a, T: GASolution> GARankSelector<'a, T>
 {
-    pub fn new(p: &'a mut GAPopulation<T>, s: &'a GAScoreTypeBasedSelection<T>) -> GARankSelector<'a, T>
+    pub fn new(s: &'a GAScoreTypeBasedSelection<T>) -> GARankSelector<'a, T>
     {
         GARankSelector
         {
-            population: p,
             score_selection: s
         }
     }
 }
 
-// TODO: DOC.
 impl<'a, T: GASolution> GASelector<'a, T> for GARankSelector<'a, T>
 {
-    fn assign(&mut self, population: &'a mut GAPopulation<T>)
+    fn update(&mut self, population: &mut GAPopulation<T>)
     {
-        self.population = population;
+        population.sort();
     }
 
-    fn update(&mut self)
-    {
-        self.population.sort();
-    }
-
-    fn select(&self, rng_ctx: &mut GARandomCtx) -> &T
+    fn select(&self, population: &'a GAPopulation<T>, rng_ctx: &mut GARandomCtx) -> &'a T
     {
         // TODO: Confirm assumption that population has 1 individual at least.
         // Number of individuals that share best score.
@@ -118,16 +157,13 @@ impl<'a, T: GASolution> GASelector<'a, T> for GARankSelector<'a, T>
         // This is not a move, but a copy.
         let population_sort_basis = self.score_selection.population_sort_basis();
 
-        // TODO: Use best() when implemented.
-        // Q: Should individual() (ith_best()) return an optional or
-        //    does it guarantee that it will always return something valid?
-        //    What if the population is still empty?
-        let best_score: f32 = self.score_selection.score(self.population.individual(0, population_sort_basis));
+        // All individuals that share the best score will be considered for selection.
+        let best_score: f32 = self.score_selection.max_score(population);
 
-        // Skip 0th best.
-        for i in 1..self.population.size()
+        // Skip 0th best. It is known that it has the best score.
+        for i in 1..population.size()
         {
-            if self.score_selection.score(self.population.individual(i, population_sort_basis)) != best_score
+            if self.score_selection.score(population.individual(i, population_sort_basis)) != best_score
             {
                 break;
             }
@@ -135,110 +171,84 @@ impl<'a, T: GASolution> GASelector<'a, T> for GARankSelector<'a, T>
             best_count = best_count + 1;
         }
 
-        // Select any individual from those that share best score.
-        self.population.individual(rng_ctx.gen_range(0, best_count), population_sort_basis)
+        // Select any individual from those that share the best score.
+        population.individual(rng_ctx.gen_range(0, best_count), population_sort_basis)
     }
 }
 
-pub struct GAUniformSelector<'a, T: 'a + GASolution>
-{
-    population: &'a mut GAPopulation<T>
-}
+pub struct GAUniformSelector;
 
-impl<'a, T: GASolution> GAUniformSelector<'a, T>
+/// Uniform selector.
+///
+/// Select an individual at random, with equal probability.
+impl GAUniformSelector
 {
-    pub fn new(p: &'a mut GAPopulation<T>) -> GAUniformSelector<'a, T>
+    pub fn new() -> GAUniformSelector
     {
         GAUniformSelector
-        {
-            population: p
-        }
     }
 }
 
-impl<'a, T: GASolution> GASelector<'a, T> for GAUniformSelector<'a, T>
+impl<'a, T: GASolution> GASelector<'a, T> for GAUniformSelector
 {
-    fn assign(&mut self, population: &'a mut GAPopulation<T>)
-    {
-        self.population = population;
-    }
-
-    fn update(&mut self)
+    fn update(&mut self, population: &mut GAPopulation<T>)
     {
         // Need to sort first, because GAPopulation.individual() draws individuals
         // from the sorted lists.
-        self.population.sort();
+        population.sort();
     }
 
     // Select any individual at random.
-    fn select(&self, rng_ctx: &mut GARandomCtx) -> &T
+    fn select(&self, population: &'a GAPopulation<T>, rng_ctx: &mut GARandomCtx) -> &'a T
     {
         // Since selection is at random, it doesn't matter where the individual
         // is drawn from, the Raw/score-sorted or the Scaled/fitness-sorted list.
-        self.population.individual(
-            rng_ctx.gen_range(0, self.population.size()),
+        population.individual(
+            rng_ctx.gen_range(0, population.size()),
             GAPopulationSortBasis::Raw)
     }
 }
 
+/// Roulette Wheel selector.
 pub struct GARouletteWheelSelector<'a, T: 'a + GASolution>
 {
-    population: &'a mut GAPopulation<T>,
-
-    // TODO: Check correct lifetime.
     score_selection: &'a GAScoreTypeBasedSelection<T>,
 
     wheel_proportions: Vec<f32>,
-
-    // TODO: Remove if not useful.
-    wheel_is_dirty: bool
 }
 
 impl<'a, T: GASolution> GARouletteWheelSelector<'a, T>
 {
-    // TODO: Check s's lifetime.
-    pub fn new(p: &'a mut GAPopulation<T>, 
-               s: &'a GAScoreTypeBasedSelection<T>) -> GARouletteWheelSelector<'a, T>
+    pub fn new(s: &'a GAScoreTypeBasedSelection<T>, p_size: usize) -> GARouletteWheelSelector<'a, T>
     {
         // TODO: Comment doesn't look correct.
         // vec![] borrows references (invocation of size() is through *p, or so the
         // compiler says); since p has already been borrowed as a mutable reference
         // (no data races allowed), p.size() can't be passed to vec![].
-        let wheel_size = p.size();
+        let wheel_size = p_size;
 
         GARouletteWheelSelector
         {
-            population: p,
             score_selection: s,
             wheel_proportions: vec![0.0; wheel_size],
-            wheel_is_dirty: false
         }
     }
 }
 
 impl<'a, T: GASolution> GASelector<'a, T> for GARouletteWheelSelector<'a, T>
 {
-    fn assign(&mut self, population: &'a mut GAPopulation<T>)
+    fn update(&mut self, population: &mut GAPopulation<T>)
     {
-        self.population = population;
-
-        if self.population.size() != self.wheel_proportions.len()
+        if population.size() != self.wheel_proportions.len()
         {
-            self.wheel_proportions.resize(self.population.size(), 0.0);
+            self.wheel_proportions.resize(population.size(), 0.0);
         }
 
-        self.wheel_is_dirty = true;
-    }
-
-    fn update(&mut self)
-    {
-        // TODO: Can a population grow? If it can, need to resize the wheel.
-
-        self.population.sort();
+        population.sort();
 
         let wheel_slots = self.wheel_proportions.len();
-        let max_score = self.score_selection.max_score(self.population);
-        let min_score = self.score_selection.min_score(self.population);
+        let max_score = self.score_selection.max_score(population);
+        let min_score = self.score_selection.min_score(population);
 
         if max_score == min_score
         {
@@ -254,19 +264,19 @@ impl<'a, T: GASolution> GASelector<'a, T> for GARouletteWheelSelector<'a, T>
             // This is not a move, but a copy.
             let population_sort_basis = self.score_selection.population_sort_basis();
 
-            match self.population.order()
+            match population.order()
             {
                 GAPopulationSortOrder::HighIsBest 
                 =>  {
                         self.wheel_proportions[0] 
                           = self.score_selection.score(
-                              self.population.individual(0, population_sort_basis));
+                              population.individual(0, population_sort_basis));
 
                         for i in 1 .. wheel_slots
                         {
                             self.wheel_proportions[i]
                               = self.score_selection.score(
-                                  self.population.individual(i, population_sort_basis))
+                                  population.individual(i, population_sort_basis))
                                 + self.wheel_proportions[i-1]; 
                         }
 
@@ -280,14 +290,14 @@ impl<'a, T: GASolution> GASelector<'a, T> for GARouletteWheelSelector<'a, T>
                 =>  {
                         self.wheel_proportions[0] 
                           = -self.score_selection.score(
-                               self.population.individual(0, population_sort_basis)) 
+                               population.individual(0, population_sort_basis)) 
                             + max_score + min_score;
 
                         for i in 1 .. wheel_slots
                         {
                             self.wheel_proportions[i] 
                               = -self.score_selection.score(
-                                   self.population.individual(i, population_sort_basis))
+                                   population.individual(i, population_sort_basis))
                                 + max_score + min_score 
                                 + self.wheel_proportions[i-1]; 
                         }
@@ -306,9 +316,8 @@ impl<'a, T: GASolution> GASelector<'a, T> for GARouletteWheelSelector<'a, T>
         }
     }
 
-    fn select(&self, rng_ctx: &mut GARandomCtx) -> &T
+    fn select(&self, population: &'a GAPopulation<T>, rng_ctx: &mut GARandomCtx) -> &'a T
     {
-        // TODO: Cache this value? Or Vec already caches it?
         let wheel_slots = self.wheel_proportions.len();
         let cutoff = rng_ctx.gen::<f32>();
         let mut lower = 0;
@@ -339,61 +348,48 @@ impl<'a, T: GASolution> GASelector<'a, T> for GARouletteWheelSelector<'a, T>
         }
 
         lower = cmp::min(wheel_slots-1, lower);
-        lower = cmp::max(0, lower);
 
-        self.population.individual(lower, self.score_selection.population_sort_basis())
+        population.individual(lower, self.score_selection.population_sort_basis())
     }
 }
 
+/// Tournament selector.
+///
+/// Select 2 individuals using Roulette Wheel selection and select the best of the 2.
 pub struct GATournamentSelector<'a, T: 'a + GASolution>
 {
-    // TODO: Check correct lifetime.
     score_selection: &'a GAScoreTypeBasedSelection<T>,
-
     roulette_wheel_selector: GARouletteWheelSelector<'a, T>,
-
-    population_sort_order: GAPopulationSortOrder
 }
 
 impl<'a, T: GASolution> GATournamentSelector<'a, T>
 {
-    // TODO: Check s's lifetime.
-    pub fn new(p: &'a mut GAPopulation<T>, 
-               s: &'a GAScoreTypeBasedSelection<T>) -> GATournamentSelector<'a, T>
+    pub fn new(s: &'a GAScoreTypeBasedSelection<T>, p_size: usize) -> GATournamentSelector<'a, T>
     {
         GATournamentSelector
         {
             score_selection: s,
-            population_sort_order: p.order(),
-            roulette_wheel_selector: GARouletteWheelSelector::new(p, s)
+            roulette_wheel_selector: GARouletteWheelSelector::new(s, p_size)
         }
     }
 }
 
 impl<'a, T: GASolution> GASelector<'a, T> for GATournamentSelector<'a, T>
 {
-    fn assign(&mut self, population: &'a mut GAPopulation<T>)
+    fn update(&mut self, population: &mut GAPopulation<T>)
     {
-        self.population_sort_order = population.order();
-
-        self.roulette_wheel_selector.assign(population);
+        self.roulette_wheel_selector.update(population);
     }
 
-    fn update(&mut self)
-    {
-        self.roulette_wheel_selector.update();
-    }
-
-    fn select(&self, rng_ctx: &mut GARandomCtx) -> &T
+    fn select(&self, population: &'a GAPopulation<T>, rng_ctx: &mut GARandomCtx) -> &'a T
     {
         let low_score_individual;
         let high_score_individual;
         let individual1;
         let individual2;
 
-        individual1 = self.roulette_wheel_selector.select(rng_ctx);
-
-        individual2 = self.roulette_wheel_selector.select(rng_ctx);
+        individual1 = self.roulette_wheel_selector.select(population, rng_ctx);
+        individual2 = self.roulette_wheel_selector.select(population, rng_ctx);
 
         if self.score_selection.score(individual1) 
            >= self.score_selection.score(individual2)
@@ -407,7 +403,7 @@ impl<'a, T: GASolution> GASelector<'a, T> for GATournamentSelector<'a, T>
             high_score_individual = individual2;
         }
 
-        match self.population_sort_order
+        match population.order()
         {
             GAPopulationSortOrder::HighIsBest => high_score_individual,
             GAPopulationSortOrder::LowIsBest  => low_score_individual

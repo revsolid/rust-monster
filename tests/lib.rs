@@ -188,22 +188,22 @@ mod tests
 
         {
             let raw_score_selection = GARawScoreBasedSelection;
-            let mut raw_rank_selector = GARankSelector::new(&mut population, &raw_score_selection);
+            let mut raw_rank_selector = GARankSelector::new(&raw_score_selection);
 
-            raw_rank_selector.update();
+            raw_rank_selector.update(&mut population);
 
             // Best Raw score is that of 1st solution.
-            assert_eq!(raw_rank_selector.select(&mut GARandomCtx::new_unseeded(String::from("test_rank_selector_rng"))).score(), f);
+            assert_eq!(raw_rank_selector.select(&population, &mut GARandomCtx::new_unseeded(String::from("test_rank_selector_rng"))).score(), f);
         }
 
         {
             let scaled_score_selection = GAScaledScoreBasedSelection;
-            let mut scaled_rank_selector = GARankSelector::new(&mut population, &scaled_score_selection);
+            let mut scaled_rank_selector = GARankSelector::new(&scaled_score_selection);
 
-            scaled_rank_selector.update();
+            scaled_rank_selector.update(&mut population);
 
             // Best Scaled score is that of 2nd solution (because fitness is inverse of score). Weird. In this case, LowIsBest.
-            assert_eq!(scaled_rank_selector.select(&mut GARandomCtx::new_unseeded(String::from("test_rank_selector_rng"))).fitness(), i_f_m);
+            assert_eq!(scaled_rank_selector.select(&population, &mut GARandomCtx::new_unseeded(String::from("test_rank_selector_rng"))).fitness(), i_f_m);
         }
     }
 
@@ -219,11 +219,11 @@ mod tests
                                    TestSolution { fitness: f_m }],
                               GAPopulationSortOrder::HighIsBest);
 
-        let mut uniform_selector = GAUniformSelector::new(&mut population);
+        let mut uniform_selector = GAUniformSelector::new();
 
-        uniform_selector.update();
+        uniform_selector.update(&mut population);
 
-        let selected_individual = uniform_selector.select(&mut GARandomCtx::new_unseeded(String::from("test_rank_selector_rng")));
+        let selected_individual = uniform_selector.select(&population, &mut GARandomCtx::new_unseeded(String::from("test_rank_selector_rng")));
         assert!(selected_individual.score() == f || selected_individual.score() == f_m);  
     }
 
@@ -251,22 +251,22 @@ mod tests
             let raw_score_selection = GARawScoreBasedSelection;
 
             let mut raw_roulette_wheel_selector 
-              = GARouletteWheelSelector::new(&mut population, &raw_score_selection);
+              = GARouletteWheelSelector::new(&raw_score_selection, population.size());
 
-            raw_roulette_wheel_selector.update();
+            raw_roulette_wheel_selector.update(&mut population);
 
-            raw_roulette_wheel_selector.select(&mut rng_ctx);
+            raw_roulette_wheel_selector.select(&population, &mut rng_ctx);
         }
         
         {
             let scaled_score_selection = GAScaledScoreBasedSelection;
 
             let mut scaled_roulette_wheel_selector 
-              = GARouletteWheelSelector::new(&mut population, &scaled_score_selection);
+              = GARouletteWheelSelector::new(&scaled_score_selection, population.size());
 
-            scaled_roulette_wheel_selector.update();
+            scaled_roulette_wheel_selector.update(&mut population);
 
-            scaled_roulette_wheel_selector.select(&mut rng_ctx);
+            scaled_roulette_wheel_selector.select(&population, &mut rng_ctx);
         }
     }
 
@@ -293,22 +293,22 @@ mod tests
             let raw_score_selection = GARawScoreBasedSelection;
 
             let mut raw_tournament_selector 
-              = GARouletteWheelSelector::new(&mut population, &raw_score_selection);
+              = GARouletteWheelSelector::new(&raw_score_selection, population.size());
 
-            raw_tournament_selector.update();
+            raw_tournament_selector.update(&mut population);
 
-            raw_tournament_selector.select(&mut rng_ctx);
+            raw_tournament_selector.select(&population, &mut rng_ctx);
         }
 
         {
             let scaled_score_selection = GAScaledScoreBasedSelection;
 
             let mut scaled_tournament_selector 
-              = GARouletteWheelSelector::new(&mut population, &scaled_score_selection);
+              = GARouletteWheelSelector::new(&scaled_score_selection, population.size());
 
-            scaled_tournament_selector.update();
+            scaled_tournament_selector.update(&mut population);
 
-            scaled_tournament_selector.select(&mut rng_ctx);
+            scaled_tournament_selector.select(&population, &mut rng_ctx);
         }
     }
 
