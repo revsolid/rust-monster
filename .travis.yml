@@ -1,0 +1,2 @@
+language: rust
+script: RUST_LOG=lib::test,rust-monster=debug cargo test --verbose
