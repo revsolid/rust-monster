@@ -203,6 +203,54 @@ impl<T: GASolution> GAPopulation<T>
     }
 }
 
+struct GAPopulationRawIterator<'a, T: 'a + GASolution>
+{
+    population: &'a GAPopulation<T>,
+    next_index: usize
+}
+
+impl<'a, T: 'a + GASolution> Iterator for GAPopulationRawIterator<'a, T>
+{
+    type Item = &'a T;
+
+    fn next(&mut self) -> Option<Self::Item>
+    {
+        if self.next_index == self.population.size()
+        {
+            None
+        }
+        else
+        {
+            self.next_index = self.next_index + 1;
+            Some(self.population.individual(self.next_index - 1, GAPopulationSortBasis::Raw)) 
+        }
+    }
+}
+
+struct GAPopulationFitnessIterator<'a, T: 'a + GASolution>
+{
+    population: &'a GAPopulation<T>,
+    next_index: usize
+}
+
+impl<'a, T: 'a + GASolution> Iterator for GAPopulationFitnessIterator<'a, T>
+{
+    type Item = &'a T;
+
+    fn next(&mut self) -> Option<Self::Item>
+    {
+        if self.next_index == self.population.size()
+        {
+            None
+        }
+        else
+        {
+            self.next_index = self.next_index + 1;
+            Some(self.population.individual(self.next_index - 1, GAPopulationSortBasis::Scaled)) 
+        }
+    }
+
+}
 
 #[cfg(test)]
 mod test
