@@ -201,6 +201,16 @@ impl<T: GASolution> GAPopulation<T>
                 },
         };
     }
+
+    pub fn raw_score_iterator() -> GAPopulationRawIterator<T>
+    {
+
+    }
+
+    pub fn fitness_score_iterator() -> GAPopulationFitnessIterator<T>
+    {
+
+    }
 }
 
 struct GAPopulationRawIterator<'a, T: 'a + GASolution>
