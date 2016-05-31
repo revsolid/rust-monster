@@ -26,7 +26,7 @@
 //!
 //! # Examples
 use super::ga_core::GASolution;
-use super::ga_population::{GAPopulation, GAPopulationSortBasis, GAPopulationSortOrder};
+use super::ga_population::{GAPopulation, GAPopulationSortBasis, GAPopulationSortOrder, GAPopulationRawIterator};
 use super::ga_random::{GARandomCtx};
 use std::cmp;
 
@@ -152,7 +152,7 @@ impl<'a, T: GASolution> GASelector<'a, T> for GARankSelector<'a, T>
     {
         // TODO: Confirm assumption that population has 1 individual at least.
         // Number of individuals that share best score.
-        let mut best_count = 1;
+        let mut best_count = 0;
 
         // This is not a move, but a copy.
         let population_sort_basis = self.score_selection.population_sort_basis();
@@ -160,15 +160,24 @@ impl<'a, T: GASolution> GASelector<'a, T> for GARankSelector<'a, T>
         // All individuals that share the best score will be considered for selection.
         let best_score: f32 = self.score_selection.max_score(population);
 
-        // Skip 0th best. It is known that it has the best score.
-        for i in 1..population.size()
-        {
-            if self.score_selection.score(population.individual(i, population_sort_basis)) != best_score
-            {
-                break;
-            }
+        // Raw iterator only for now.
+        let mut iterator: GAPopulationRawIterator<T> = population.raw_score_iterator();
 
-            best_count = best_count + 1;
+        loop
+        {
+            match iterator.next()
+            {
+                Some(solution) => 
+                    if self.score_selection.score(solution) == best_score
+                    {
+                        best_count = best_count + 1;
+                    }
+                    else
+                    {
+                        break;
+                    },
+                None => break,
+            }
         }
 
         // Select any individual from those that share the best score.

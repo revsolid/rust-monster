@@ -202,21 +202,21 @@ impl<T: GASolution> GAPopulation<T>
         };
     }
 
-    pub fn raw_score_iterator() -> GAPopulationRawIterator<T>
+    pub fn raw_score_iterator<'a>(&'a self) -> GAPopulationRawIterator<'a, T>
     {
-
+        GAPopulationRawIterator { population: &self, next: 0 }
     }
 
-    pub fn fitness_score_iterator() -> GAPopulationFitnessIterator<T>
+    pub fn fitness_score_iterator<'a>(&'a self) -> GAPopulationFitnessIterator<'a, T>
     {
-
+        GAPopulationFitnessIterator { population: &self, next: 0 }
     }
 }
 
-struct GAPopulationRawIterator<'a, T: 'a + GASolution>
+pub struct GAPopulationRawIterator<'a, T: 'a + GASolution>
 {
     population: &'a GAPopulation<T>,
-    next_index: usize
+    next: usize
 }
 
 impl<'a, T: 'a + GASolution> Iterator for GAPopulationRawIterator<'a, T>
@@ -225,22 +225,22 @@ impl<'a, T: 'a + GASolution> Iterator for GAPopulationRawIterator<'a, T>
 
     fn next(&mut self) -> Option<Self::Item>
     {
-        if self.next_index == self.population.size()
+        if self.next == self.population.size()
         {
             None
         }
         else
         {
-            self.next_index = self.next_index + 1;
-            Some(self.population.individual(self.next_index - 1, GAPopulationSortBasis::Raw)) 
+            self.next = self.next + 1;
+            Some(self.population.individual(self.next - 1, GAPopulationSortBasis::Raw)) 
         }
     }
 }
 
-struct GAPopulationFitnessIterator<'a, T: 'a + GASolution>
+pub struct GAPopulationFitnessIterator<'a, T: 'a + GASolution>
 {
     population: &'a GAPopulation<T>,
-    next_index: usize
+    next: usize
 }
 
 impl<'a, T: 'a + GASolution> Iterator for GAPopulationFitnessIterator<'a, T>
@@ -249,14 +249,14 @@ impl<'a, T: 'a + GASolution> Iterator for GAPopulationFitnessIterator<'a, T>
 
     fn next(&mut self) -> Option<Self::Item>
     {
-        if self.next_index == self.population.size()
+        if self.next == self.population.size()
         {
             None
         }
         else
         {
-            self.next_index = self.next_index + 1;
-            Some(self.population.individual(self.next_index - 1, GAPopulationSortBasis::Scaled)) 
+            self.next = self.next + 1;
+            Some(self.population.individual(self.next - 1, GAPopulationSortBasis::Scaled)) 
         }
     }
 
