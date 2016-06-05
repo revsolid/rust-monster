@@ -41,6 +41,7 @@ pub trait GASolution
     fn evaluate(&mut self) -> f32;
     // Scaled fitness score
     fn fitness(&self) -> f32;
+    fn set_fitness(&self, f : f32);
     // Raw objective score
     fn score(&self) -> f32;
 }
