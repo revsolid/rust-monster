@@ -1,6 +1,6 @@
 // Copyright 2016 Revolution Solid & Contributors.
 // author(s): sysnett
-// rust-monster is licensed under an MIT License.
+// rust-monster is licensed under a MIT License.
 
 //! GA Random Numbers Util
 //!
@@ -142,16 +142,18 @@ impl fmt::Debug for GARandomCtx
     }
 }
 
+////////////////////////////////////////
+// Tests
 #[cfg(test)]
 mod test
 {
-    extern crate env_logger;
     use super::{GASeed, GARandomCtx};
+    use super::super::ga_test::{ga_test_setup, ga_test_teardown};
 
     #[test]
     fn same_seed()
     {
-        let _ = env_logger::init();
+        ga_test_setup("ga_random::same_seed");
         let seed : GASeed = [1,2,3,4];
         let mut ga_ctx = GARandomCtx::from_seed(seed, String::from("TestRandomCtx")); 
         let mut ga_ctx_2 = GARandomCtx::from_seed(seed, String::from("TestRandomCtx2")); 
@@ -171,12 +173,13 @@ mod test
         }
         debug!("{:?}", ga_ctx);
         debug!("{:?}", ga_ctx_2);
+        ga_test_teardown();
     }
 
     #[test]
     fn diff_seed()
     {
-        let _ = env_logger::init();
+        ga_test_setup("ga_random::diff_seed");
         let seed_1 : GASeed = [1,2,3,4];
         let seed_2 : GASeed = [4,3,2,1];
         let mut ga_ctx = GARandomCtx::from_seed(seed_1, String::from("TestRandomCtx")); 
@@ -197,12 +200,13 @@ mod test
         }
         debug!("{:?}", ga_ctx);
         debug!("{:?}", ga_ctx_2);
+        ga_test_teardown();
     }
 
     #[test]
     fn same_seed_different_types()
     {
-        let _ = env_logger::init();
+        ga_test_setup("ga_random::same_seed_different_types");
         let seed_1 = [1; 4];
         let mut ga_ctx = GARandomCtx::from_seed(seed_1, String::from("TestRandomCtx")); 
         let mut ga_ctx_2 = GARandomCtx::from_seed(seed_1, String::from("TestRandomCtx")); 
