@@ -142,7 +142,6 @@ impl fmt::Debug for GARandomCtx
     }
 }
 
-
 ////////////////////////////////////////
 // Tests
 #[cfg(test)]
