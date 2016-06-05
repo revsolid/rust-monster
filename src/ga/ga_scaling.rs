@@ -4,7 +4,7 @@
 
 //! GA Scaling Schemes
 //!
-//! Scheme to
+//! Scales the raw score of a Population's individuals.
 
 use super::ga_core::GASolution;
 use super::ga_population::GAPopulation;
@@ -19,32 +19,32 @@ pub trait GAScaling<T: GASolution>
 }
 
 /// No Scaling - Raw and Scaled are the same
-struct GANoScaling
-{
-}
+pub struct GANoScaling;
 
 impl<T: GASolution> GAScaling<T> for GANoScaling
 {
     fn evaluate(&self, pop: &mut GAPopulation<T>)
     {
         // TODO: This is why we need iterators :(
-        let mut pop_vec = pop.population();
+        let pop_vec = pop.population();
         for ref mut ind in pop_vec
         {
-           ind.set_fitness(ind.score()); 
+            let f = ind.score();
+           ind.set_fitness(f); 
         }
     }
 }
 
 /// Linear Scaling
-/// Uses a simple a*fitness + b scaling.
-/// a and b are the intersect of the linear function and are calculated
-/// based on Goldberg's implementation from his book
-struct GALinearScaling
+/// Uses a simple ```a*fitness + b``` scaling.
+/// ```a``` and ```b``` are the intersect of the linear function and are calculated
+/// based on Goldberg's book implementation
+pub struct GALinearScaling
 {
     multiplier: f32
 }
 
+#[allow(unused_variables)]
 const GA_LINEAR_SCALING_MULTIPLIER : f32 = 2.0;
 impl GALinearScaling
 {
@@ -60,7 +60,7 @@ impl GALinearScaling
         let b;
         let delta;
 
-        if min > ( (m*avg - max) / (m - 1.0) )
+        if min > ((m*avg - max) / (m - 1.0))
         {
             delta = max - avg;
             a = avg / delta;
@@ -81,32 +81,27 @@ impl<T: GASolution> GAScaling<T> for GALinearScaling
 {
     fn evaluate(&self, pop : &mut GAPopulation<T>)
     {
-        let mut pop_vec = pop.population();
+        let max = pop.best_by_raw_score().score();
+        let min = pop.worst_by_raw_score().score();
 
-        // TODO FIX THIS MESS 
-        // max(), min() and avg() should exist in GAPopulation
-        let mut max = pop_vec[0].score();
-        let mut min = pop_vec[pop_vec.len()-1].score();
-        if min > max 
-        {
-            let mut t = min;
-            min = max;
-            max = t;
-        }
-
+        // TODO: avg should be part of GAPopulation
         let avg = (max - min) / 2.0;
-        // ~TODO
 
         let (a, b) = self.prescale(max, min, avg);
 
+        let pop_vec = pop.population();
         for ref mut ind in pop_vec
         {
-           ind.set_fitness(a*ind.score()+b); 
+            let f = ind.score();
+            ind.set_fitness(a*f+b); 
         }
     }
 }
 
 
+////////////////////////////////////////
+// Tests
 #[cfg(test)]
 mod test
-{}
+{
+}

@@ -1,11 +1,13 @@
-// TODO: COPYRIGHT, USE & AUTHORS
+// Copyright 2016 Revolution Solid & Contributors.
+// author(s): sysnett
+// rust-monster is licensed under a MIT License.
 use super::ga_core::{GAConfig, GAFactory, GAFlags, GeneticAlgorithm, GASolution};
 use super::ga_population::GAPopulation;
 use super::ga_random::{GARandomCtx, GASeed};
 
-// Simple Genetic Algorithm Config
+/// Simple Genetic Algorithm Config
+/// Genetic Algorithm Config Trait Implementation for the Simple Genetic Algorithm
 #[derive(Copy, Clone, Default, Debug)]
-// TODO: RUST DOCS! 
 pub struct SimpleGeneticAlgorithmCfg
 {
     pub d_seed : GASeed,
@@ -168,5 +170,104 @@ impl<T: GASolution> GeneticAlgorithm<T> for SimpleGeneticAlgorithm <T>
     fn done_internal(&mut self) -> bool
     {
         self.current_generation >= self.config().max_generations() 
+    }
+}
+
+////////////////////////////////////////
+// Tests
+#[cfg(test)]
+mod tests
+{
+    use super::super::ga_test::*;
+    use super::super::ga_population::*;
+    use super::super::ga_core::*;
+    use super::*;
+
+    fn simple_ga_validation(sga:&mut SimpleGeneticAlgorithm<GATestSolution>)
+    {
+        sga.initialize();
+        assert_eq!(sga.step(), 1);
+        assert_eq!(sga.done(), false);
+        assert_eq!(sga.population().size(), 1);
+        assert_eq!(sga.population().best().score(), GA_TEST_FITNESS_VAL);
+    }
+
+    #[test]
+    fn init_test_with_initial_population()
+    {
+        ga_test_setup("ga_simple::init_test_with_initial_population");
+        let initial_population = GAPopulation::new(vec![GATestSolution::new(GA_TEST_FITNESS_VAL)],
+                                 GAPopulationSortOrder::HighIsBest);
+        let mut ga : SimpleGeneticAlgorithm<GATestSolution> =
+                     SimpleGeneticAlgorithm::new(SimpleGeneticAlgorithmCfg {
+                                                   d_seed : [1; 4],
+                                                   flags : DEBUG_FLAG,
+                                                   max_generations: 100,
+                                                   ..Default::default()
+                                                 },
+                                                 None,
+                                                 Some(initial_population) 
+                                                 );
+        simple_ga_validation(&mut ga);
+    }
+
+    #[test]
+    fn init_test_with_factory()
+    {
+        ga_test_setup("ga_simple::init_test_with_factory");
+        let mut factory = GATestFactory::new(GA_TEST_FITNESS_VAL);
+        let mut ga : SimpleGeneticAlgorithm<GATestSolution> =
+                     SimpleGeneticAlgorithm::new(SimpleGeneticAlgorithmCfg {
+                                                   d_seed : [1; 4],
+                                                   flags : DEBUG_FLAG,
+                                                   max_generations: 100,
+                                                   ..Default::default()
+                                                 },
+                                                 Some(&mut factory as &mut GAFactory<GATestSolution>),
+                                                 None
+                                                 );
+        simple_ga_validation(&mut ga);
+        ga_test_teardown();
+    }
+
+    #[test]
+    #[should_panic]
+    #[allow(unused_variables)]
+    fn init_test_missing_args()
+    {
+        ga_test_setup("ga_simple::init_test_missing_args");
+        let ga : SimpleGeneticAlgorithm<GATestSolution> =
+                 SimpleGeneticAlgorithm::new(SimpleGeneticAlgorithmCfg {
+                                               d_seed : [1; 4],
+                                               flags : DEBUG_FLAG,
+                                               max_generations: 100,
+                                               ..Default::default()
+                                             },
+                                             None,
+                                             None 
+                                             );
+        // Not reached
+        ga_test_teardown();
+    }
+
+    #[test]
+    #[should_panic]
+    fn init_test_empty_initial_pop()
+    {
+        ga_test_setup("ga_simple::init_test_empty_initial_pop");
+        let empty_initial_population : GAPopulation<GATestSolution> = GAPopulation::new(vec![], GAPopulationSortOrder::HighIsBest);
+        let mut ga : SimpleGeneticAlgorithm<GATestSolution> =
+                     SimpleGeneticAlgorithm::new(SimpleGeneticAlgorithmCfg {
+                                                   d_seed : [1; 4],
+                                                   flags : DEBUG_FLAG,
+                                                   max_generations: 100,
+                                                   ..Default::default()
+                                                 },
+                                                 None,
+                                                 Some(empty_initial_population) 
+                                                 );
+        ga.initialize();
+        //Not reached 
+        ga_test_teardown();
     }
 }

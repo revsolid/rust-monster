@@ -1,4 +1,8 @@
-// TODO: COPYRIGHT, USE & AUTHORS
+// Copyright 2016 Revolution Solid & Contributors.
+// author(s): sysnett
+// rust-monster is licensed under a MIT License.
+
+//! Genetic Algorithm Population
 
 use super::ga_core::GASolution;
 
@@ -23,7 +27,6 @@ pub enum GAPopulationSortOrder
 }
 
 /// Genetic Algorithm Population
-// TODO: RUST DOCS!
 pub struct GAPopulation<T: GASolution>
 {
     population: Vec<T>,
@@ -202,7 +205,33 @@ impl<T: GASolution> GAPopulation<T>
 }
 
 
+////////////////////////////////////////
+// Tests
 #[cfg(test)]
 mod test
 {
+    use super::*;
+    use super::super::ga_test::*;
+    use super::super::ga_core::*;
+
+    #[test]
+    fn test_sort_population()
+    {
+        ga_test_setup("ga_population::test_sort_population");
+        let f = GA_TEST_FITNESS_VAL;
+        let f_m = GA_TEST_FITNESS_VAL - 1.0;
+        let i_f = 1.0 / f;
+        let i_f_m = 1.0 / f_m;
+
+        let mut population = GAPopulation::new(vec![GATestSolution::new(f), GATestSolution::new(f_m)], GAPopulationSortOrder::HighIsBest);
+        population.sort();
+
+        //TestSolution's Fitness is the inverse of the Score (F = 1/S)
+        assert_eq!(population.individual(0, GAPopulationSortBasis::Raw).score(), f);
+        assert_eq!(population.individual(1, GAPopulationSortBasis::Raw).score(), f_m);
+        assert_eq!(population.individual(0, GAPopulationSortBasis::Scaled).fitness(), i_f_m);
+        assert_eq!(population.individual(1, GAPopulationSortBasis::Scaled).fitness(), i_f);
+    }
+
+    
 }

@@ -1,4 +1,10 @@
-// TODO: COPYRIGHT, USE & AUTHORS
+// Copyright 2016 Revolution Solid & Contributors.
+// author(s): sysnett, carlos-lopez-garces
+// rust-monster is licensed under an MIT License.
+
+//! GA Core 
+//! Defines the core traits to work with rust-monster
+
 
 use super::ga_population::{GAPopulation, GAPopulationSortOrder};
 
@@ -19,6 +25,8 @@ impl Default for GAFlags
 
 
 /// Genetic Algorithm Configuration
+///
+/// 
 pub trait GAConfig
 {
     fn flags(&self) -> GAFlags;
@@ -32,7 +40,7 @@ pub trait GAConfig
 pub trait GASolution
 {
     //Static
-    fn new() -> Self;
+    fn new(f:f32) -> Self;
 
     // Instance
     fn clone(&self) -> Self;
@@ -41,7 +49,7 @@ pub trait GASolution
     fn evaluate(&mut self) -> f32;
     // Scaled fitness score
     fn fitness(&self) -> f32;
-    fn set_fitness(&self, f : f32);
+    fn set_fitness(&mut self, f : f32);
     // Raw objective score
     fn score(&self) -> f32;
 }

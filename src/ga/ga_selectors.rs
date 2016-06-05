@@ -39,7 +39,7 @@ pub trait GASelector<'a, T: GASolution>
     /// Update internal state. 
     ///
     /// NOOP default implementation for selectors that don't keep internal state.
-    fn update(&mut self, population: &mut GAPopulation<T>) {}
+    fn update(&mut self, _: &mut GAPopulation<T>) {}
 
     /// Select an individual from the population. 
     ///
@@ -408,5 +408,163 @@ impl<'a, T: GASolution> GASelector<'a, T> for GATournamentSelector<'a, T>
             GAPopulationSortOrder::HighIsBest => high_score_individual,
             GAPopulationSortOrder::LowIsBest  => low_score_individual
         } 
+    }
+}
+
+
+////////////////////////////////////////
+// Tests
+#[cfg(test)]
+mod test
+{
+    use super::super::ga_core::*;
+    use super::super::ga_population::*;
+    use super::super::ga_random::*;
+    use super::super::ga_test::*;
+    use super::*;
+
+    #[test]
+    #[allow(unused_variables)]
+    fn test_rank_selector()
+    {
+        ga_test_setup("ga_selectors::test_rank_selector");
+        let f = GA_TEST_FITNESS_VAL;
+        let f_m = GA_TEST_FITNESS_VAL - 1.0;
+        let i_f = 1.0 / f;
+        let i_f_m = 1.0 / f_m;
+
+        let mut population
+          = GAPopulation::new(vec![GATestSolution::new(f),
+                                   GATestSolution::new(f_m)],
+                              GAPopulationSortOrder::HighIsBest);
+
+        {
+            let raw_score_selection = GARawScoreBasedSelection;
+            let mut raw_rank_selector = GARankSelector::new(&raw_score_selection);
+
+            raw_rank_selector.update(&mut population);
+
+            // Best Raw score is that of 1st solution.
+            assert_eq!(raw_rank_selector.select(&population, &mut GARandomCtx::new_unseeded(String::from("test_rank_selector_rng"))).score(), f);
+        }
+
+        {
+            let scaled_score_selection = GAScaledScoreBasedSelection;
+            let mut scaled_rank_selector = GARankSelector::new(&scaled_score_selection);
+
+            scaled_rank_selector.update(&mut population);
+
+            // Best Scaled score is that of 2nd solution (because fitness is inverse of score). Weird. In this case, LowIsBest.
+            assert_eq!(scaled_rank_selector.select(&population, &mut GARandomCtx::new_unseeded(String::from("test_rank_selector_rng"))).fitness(), i_f_m);
+        }
+        ga_test_teardown();
+    }
+
+    #[test]
+    fn test_uniform_selector()
+    {
+        ga_test_setup("ga_selectors::test_uniform_selector");
+        let f = GA_TEST_FITNESS_VAL;
+        let f_m = GA_TEST_FITNESS_VAL - 1.0;
+
+        let mut population
+          = GAPopulation::new(vec![GATestSolution::new(f),
+                                   GATestSolution::new(f_m)],
+                              GAPopulationSortOrder::HighIsBest);
+
+        let mut uniform_selector = GAUniformSelector::new();
+
+        uniform_selector.update(&mut population);
+
+        let selected_individual = uniform_selector.select(&population, &mut GARandomCtx::new_unseeded(String::from("test_rank_selector_rng")));
+        assert!(selected_individual.score() == f || selected_individual.score() == f_m);  
+        ga_test_teardown();
+    }
+
+    #[test]
+    #[allow(unused_variables)]
+    fn test_roulette_wheel_selector()
+    {
+        ga_test_setup("ga_selectors::test_roulette_wheel_selector");
+        // Just exercise the code.
+        // TODO: How to test when there is randomness?
+
+        let mut individuals = vec![];
+        let mut rng_ctx = GARandomCtx::new_unseeded(String::from("test_roulette_wheel_selector_rng"));
+
+
+        for i in 1 .. 20
+        {
+            individuals.push(GATestSolution::new(rng_ctx.gen::<f32>()));
+        }
+
+        let mut population
+          = GAPopulation::new(individuals, GAPopulationSortOrder::LowIsBest);
+
+        {
+            let raw_score_selection = GARawScoreBasedSelection;
+
+            let mut raw_roulette_wheel_selector 
+              = GARouletteWheelSelector::new(&raw_score_selection, population.size());
+
+            raw_roulette_wheel_selector.update(&mut population);
+
+            raw_roulette_wheel_selector.select(&population, &mut rng_ctx);
+        }
+        
+        {
+            let scaled_score_selection = GAScaledScoreBasedSelection;
+
+            let mut scaled_roulette_wheel_selector 
+              = GARouletteWheelSelector::new(&scaled_score_selection, population.size());
+
+            scaled_roulette_wheel_selector.update(&mut population);
+
+            scaled_roulette_wheel_selector.select(&population, &mut rng_ctx);
+        }
+        ga_test_teardown();
+    }
+
+    #[test]
+    #[allow(unused_variables)]
+    fn test_tournament_selector()
+    {
+        // Just exercise the code.
+        // TODO: How to test when there is randomness?
+
+        ga_test_setup("ga_selectors::test_tournament_selector");
+        let mut individuals = vec![];
+        let mut rng_ctx = GARandomCtx::new_unseeded(String::from("test_tournament_selector_rng"));
+
+        for i in 1 .. 20
+        {
+            individuals.push(GATestSolution::new(rng_ctx.gen::<f32>()));
+        }
+
+        let mut population
+          = GAPopulation::new(individuals, GAPopulationSortOrder::LowIsBest);
+
+        {
+            let raw_score_selection = GARawScoreBasedSelection;
+
+            let mut raw_tournament_selector 
+              = GARouletteWheelSelector::new(&raw_score_selection, population.size());
+
+            raw_tournament_selector.update(&mut population);
+
+            raw_tournament_selector.select(&population, &mut rng_ctx);
+        }
+
+        {
+            let scaled_score_selection = GAScaledScoreBasedSelection;
+
+            let mut scaled_tournament_selector 
+              = GARouletteWheelSelector::new(&scaled_score_selection, population.size());
+
+            scaled_tournament_selector.update(&mut population);
+
+            scaled_tournament_selector.select(&population, &mut rng_ctx);
+        }
+        ga_test_teardown();
     }
 }
