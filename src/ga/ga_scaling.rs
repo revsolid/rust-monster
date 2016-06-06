@@ -27,10 +27,10 @@ impl<T: GASolution> GAScaling<T> for GANoScaling
     {
         // TODO: This is why we need iterators :(
         let pop_vec = pop.population();
-        for ref mut ind in pop_vec
+        for ind in pop_vec
         {
-            let f = ind.score();
-           ind.set_fitness(f); 
+            let rs = ind.score();
+            ind.set_fitness(rs); 
         }
     }
 }
@@ -63,8 +63,8 @@ impl GALinearScaling
         if min > ((m*avg - max) / (m - 1.0))
         {
             delta = max - avg;
-            a = avg / delta;
-            b = avg * (max - m*avg) / delta;
+            a = (m - 1.0) * avg / delta;
+            b = avg * (max - m * avg) / delta;
         }
         else
         {
@@ -90,10 +90,10 @@ impl<T: GASolution> GAScaling<T> for GALinearScaling
         let (a, b) = self.prescale(max, min, avg);
 
         let pop_vec = pop.population();
-        for ref mut ind in pop_vec
+        for ind in pop_vec
         {
-            let f = ind.score();
-            ind.set_fitness(a*f+b); 
+            let rs = ind.score();
+            ind.set_fitness(a*rs+b); 
         }
     }
 }
@@ -104,4 +104,46 @@ impl<T: GASolution> GAScaling<T> for GALinearScaling
 #[cfg(test)]
 mod test
 {
+    use super::*;
+    use super::super::ga_core::*;
+    use super::super::ga_population::*;
+    use super::super::ga_test::*;
+    
+    #[test]
+    fn no_scaling()
+    {
+        ga_test_setup("ga_scaling::no_scaling");
+        let f = GA_TEST_FITNESS_VAL;
+        let mut population = GAPopulation::new(vec![GATestSolution::new(f)], GAPopulationSortOrder::HighIsBest);
+        population.sort();
+
+        let scaler = GANoScaling{};
+
+        scaler.evaluate(&mut population);
+
+        assert_eq!(population.individual(0, GAPopulationSortBasis::Raw).fitness(),
+                   population.individual(0, GAPopulationSortBasis::Raw).score());
+
+        ga_test_teardown();
+    }
+
+    #[test]
+    fn linear_scaling()
+    {
+        ga_test_setup("ga_scaling::no_scaling");
+        let f = GA_TEST_FITNESS_VAL;
+        let mut population = GAPopulation::new(vec![GATestSolution::new(f)], GAPopulationSortOrder::HighIsBest);
+        population.sort();
+
+        let scaler = GALinearScaling{ multiplier: super::GA_LINEAR_SCALING_MULTIPLIER };
+
+        scaler.evaluate(&mut population);
+
+        // TODO: Real test
+        assert!(population.individual(0, GAPopulationSortBasis::Raw).fitness() !=
+                population.individual(0, GAPopulationSortBasis::Raw).score());
+
+        ga_test_teardown();
+    }
+
 }
