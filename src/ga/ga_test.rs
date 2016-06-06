@@ -51,7 +51,7 @@ impl GASolution for GATestSolution
         GATestSolution{ fitness: f}
     }
 
-    fn clone(&self) -> Self { GATestSolution::new(self.fitness) }
+    //fn clone(&self) -> Self { GATestSolution::new(self.fitness) }
     fn evaluate(&mut self) -> f32 { self.fitness }
 #[allow(unused_variables)]
     fn crossover(&self, other : &Self) -> Self { GATestSolution::new(self.fitness) }
