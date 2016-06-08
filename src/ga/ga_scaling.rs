@@ -36,7 +36,7 @@ impl<T: GASolution> GAScaling<T> for GANoScaling
 }
 
 /// Linear Scaling
-/// Uses a simple ```a*fitness + b``` scaling.
+/// Uses a simple ```a*score+ b``` scaling.
 /// ```a``` and ```b``` are the intersect of the linear function and are calculated
 /// based on Goldberg's book implementation
 pub struct GALinearScaling
@@ -48,7 +48,7 @@ pub struct GALinearScaling
 const GA_LINEAR_SCALING_MULTIPLIER : f32 = 2.0;
 impl GALinearScaling
 {
-    fn new(scaling: f32) -> GALinearScaling
+    fn new(mult: f32) -> GALinearScaling
     {
         GALinearScaling{ multiplier: scaling }
     }
