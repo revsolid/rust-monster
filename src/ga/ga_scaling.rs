@@ -50,7 +50,7 @@ impl GALinearScaling
 {
     fn new(mult: f32) -> GALinearScaling
     {
-        GALinearScaling{ multiplier: scaling }
+        GALinearScaling{ multiplier: mult }
     }
 
     fn prescale(&self, max: f32, min: f32, avg: f32) -> (f32, f32)
