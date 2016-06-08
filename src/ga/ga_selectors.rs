@@ -39,7 +39,7 @@ pub trait GASelector<'a, T: GASolution>
     /// Update internal state. 
     ///
     /// NOOP default implementation for selectors that don't keep internal state.
-    fn update(&mut self, population: &mut GAPopulation<T>) {}
+    fn update(&mut self, _: &mut GAPopulation<T>) {}
 
     /// Select an individual from the population. 
     ///
@@ -412,6 +412,8 @@ impl<'a, T: GASolution> GASelector<'a, T> for GATournamentSelector<'a, T>
 }
 
 
+////////////////////////////////////////
+// Tests
 #[cfg(test)]
 mod test
 {
@@ -455,6 +457,7 @@ mod test
             // Best Scaled score is that of 2nd solution (because fitness is inverse of score). Weird. In this case, LowIsBest.
             assert_eq!(scaled_rank_selector.select(&population, &mut GARandomCtx::new_unseeded(String::from("test_rank_selector_rng"))).fitness(), i_f_m);
         }
+        ga_test_teardown();
     }
 
     #[test]
@@ -475,6 +478,7 @@ mod test
 
         let selected_individual = uniform_selector.select(&population, &mut GARandomCtx::new_unseeded(String::from("test_rank_selector_rng")));
         assert!(selected_individual.score() == f || selected_individual.score() == f_m);  
+        ga_test_teardown();
     }
 
     #[test]
@@ -518,6 +522,7 @@ mod test
 
             scaled_roulette_wheel_selector.select(&population, &mut rng_ctx);
         }
+        ga_test_teardown();
     }
 
     #[test]
@@ -560,6 +565,6 @@ mod test
 
             scaled_tournament_selector.select(&population, &mut rng_ctx);
         }
+        ga_test_teardown();
     }
 }
-

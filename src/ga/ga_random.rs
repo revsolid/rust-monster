@@ -213,5 +213,6 @@ mod test
         debug!("{:?}", ga_ctx.gen::<f32>()); 
         debug!("{:?}", ga_ctx_2.gen::<i8>()); 
         assert_eq!(ga_ctx.gen::<f32>(), ga_ctx_2.gen::<f32>());
+        ga_test_teardown();
     }
 }
