@@ -220,7 +220,7 @@ pub struct GAPopulationRawIterator<'a, T: 'a + GASolution>
     next: usize
 }
 
-impl<'a, T: 'a + GASolution> Iterator for GAPopulationRawIterator<'a, T>
+impl<'a, T: GASolution> Iterator for GAPopulationRawIterator<'a, T>
 {
     type Item = &'a T;
 
@@ -244,7 +244,7 @@ pub struct GAPopulationFitnessIterator<'a, T: 'a + GASolution>
     next: usize
 }
 
-impl<'a, T: 'a + GASolution> Iterator for GAPopulationFitnessIterator<'a, T>
+impl<'a, T: GASolution> Iterator for GAPopulationFitnessIterator<'a, T>
 {
     type Item = &'a T;
 
