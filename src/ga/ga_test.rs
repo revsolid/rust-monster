@@ -44,6 +44,7 @@ pub fn ga_test_teardown(){}
 
 /// GATestSolution
 /// Implements the GASolution Trait with only no-ops
+#[derive(Clone)]
 pub struct GATestSolution
 {
     score: f32,
