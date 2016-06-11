@@ -117,7 +117,7 @@ mod test
         let mut population = GAPopulation::new(vec![GATestSolution::new(f)], GAPopulationSortOrder::HighIsBest);
         population.sort();
 
-        let scaler = GANoScaling{};
+        let scaler = GANoScaling;
 
         scaler.evaluate(&mut population);
 
