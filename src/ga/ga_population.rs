@@ -2,6 +2,8 @@
 // author(s): sysnett
 // rust-monster is licensed under a MIT License.
 
+//! Genetic Algorithm Population
+
 use super::ga_core::GASolution;
 
 use std::cmp::Ordering;
@@ -25,7 +27,6 @@ pub enum GAPopulationSortOrder
 }
 
 /// Genetic Algorithm Population
-// TODO: RUST DOCS!
 pub struct GAPopulation<T: GASolution>
 {
     population: Vec<T>,
@@ -262,6 +263,8 @@ impl<'a, T: 'a + GASolution> Iterator for GAPopulationFitnessIterator<'a, T>
 
 }
 
+////////////////////////////////////////
+// Tests
 #[cfg(test)]
 mod test
 {
@@ -281,11 +284,12 @@ mod test
         let mut population = GAPopulation::new(vec![GATestSolution::new(f), GATestSolution::new(f_m)], GAPopulationSortOrder::HighIsBest);
         population.sort();
 
-        //TestSolution's Fitness is the inverse of the Score (F = 1/S)
+        //GATestSolution's Fitness is the inverse of the Score (F = 1/S)
         assert_eq!(population.individual(0, GAPopulationSortBasis::Raw).score(), f);
         assert_eq!(population.individual(1, GAPopulationSortBasis::Raw).score(), f_m);
         assert_eq!(population.individual(0, GAPopulationSortBasis::Scaled).fitness(), i_f_m);
         assert_eq!(population.individual(1, GAPopulationSortBasis::Scaled).fitness(), i_f);
+        ga_test_teardown();
     }
 
     

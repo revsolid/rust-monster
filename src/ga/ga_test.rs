@@ -22,7 +22,11 @@ pub fn ga_test_setup(test_name: &str)
 #[cfg(not(test))]
 fn ga_test_setup_internal(_: &str)
 {
-    //This only exists to avoid bringing env_logger in non_test builds
+    // This only exists to avoid bringing env_logger in non-test builds
+    // but keeping ga_test_setup documented
+    // This is needed because [cfg(test)] conditional compilation wont
+    // work on non-item statements as of rustc 1.9 (is experimental)
+    // DO NOT ADD CODE HERE (See below)
 }
 
 #[cfg(test)]
@@ -39,44 +43,42 @@ pub fn ga_test_teardown(){}
 
 
 /// GATestSolution
-/// Implements the GASolution Trait with a only no-ops
+/// Implements the GASolution Trait with only no-ops
 pub struct GATestSolution
 {
+    score: f32,
     fitness: f32
 }
 impl GASolution for GATestSolution 
 {
-    fn new(f:f32) -> GATestSolution
+    fn new(rs:f32) -> GATestSolution
     {
-        GATestSolution{ fitness: f}
+        GATestSolution{ score: rs, fitness: 1.0/rs }
     }
 
-    //fn clone(&self) -> Self { GATestSolution::new(self.fitness) }
     fn evaluate(&mut self) -> f32 { self.fitness }
-#[allow(unused_variables)]
-    fn crossover(&self, other : &Self) -> Self { GATestSolution::new(self.fitness) }
-#[allow(unused_variables)]
-    fn mutate(&mut self, pm : f32) {}
-    fn fitness(&self) -> f32 { (1.0 / self.fitness) }
-    fn score(&self) -> f32 { self.fitness }
+    fn crossover(&self, _: &Self) -> Self { GATestSolution::new(self.fitness) }
+    fn mutate(&mut self, _: f32) {}
+    fn fitness(&self) -> f32 { self.fitness }
+    fn set_fitness(&mut self, fitness:f32) { self.fitness = fitness; }
+    fn score(&self) -> f32 { self.score}
 }
 
-#[allow(dead_code)]
 pub struct GATestFactory
 {
-    starting_fitness: f32
+    starting_score: f32
 }
 impl GATestFactory
 {
-    pub fn new(starting_fitness: f32) -> GATestFactory
+    pub fn new(starting_score: f32) -> GATestFactory
     {
-        GATestFactory {starting_fitness: starting_fitness}
+        GATestFactory {starting_score: starting_score}
     }
 }
 impl GAFactory<GATestSolution> for GATestFactory
 {
     fn initial_population(&mut self) -> GAPopulation<GATestSolution>
     {
-        GAPopulation::new(vec![GATestSolution { fitness: self.starting_fitness }], GAPopulationSortOrder::HighIsBest)
+        GAPopulation::new(vec![GATestSolution::new(self.starting_score)], GAPopulationSortOrder::HighIsBest)
     }
 }
