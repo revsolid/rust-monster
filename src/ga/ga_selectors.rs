@@ -39,7 +39,7 @@ pub trait GASelector<T: GASolution>
     /// Update internal state. 
     ///
     /// NOOP default implementation for selectors that don't keep internal state.
-    fn update<S: GAScoreSelection<T>>(&mut self, pop: &mut GAPopulation<T>) {}
+    fn update<S: GAScoreSelection<T>>(&mut self, _: &mut GAPopulation<T>) {}
 
     /// Select an individual from the population. 
     ///
@@ -156,30 +156,14 @@ impl<T: GASolution> GASelector<T> for GARankSelector
 
     fn select<'a, S: GAScoreSelection<T>>(&self, pop: &'a GAPopulation<T>, rng_ctx: &mut GARandomCtx) -> &'a T
     {
-        // TODO: Confirm assumption that population has 1 individual at least.
-        // Number of individuals that share best score.
-        let mut best_count = 0;
-
-        // This is not a move, but a copy.
-        //let population_sort_basis = S::population_sort_basis();
-
         // All individuals that share the best score will be considered for selection.
         let best_score: f32 = S::max_score(pop);
 
-        for ind in S::iterator(pop)
-        {
-            if S::score(ind) == best_score
-            {
-                best_count = best_count + 1;
-            }
-            else
-            {
-                break;
-            }
-        }
+        // Collect all individuals that share the best score.
+        let best_inds: Vec<&T> = S::iterator(pop).take_while(|ind| S::score(ind) == best_score).collect();
 
-        // Select any individual from those that share the best score.
-        pop.individual(rng_ctx.gen_range(0, best_count), S::population_sort_basis())
+        // Select 1 from them at random.
+        best_inds[rng_ctx.gen_range(0, best_inds.len())]
     }
 }
 
@@ -454,7 +438,6 @@ mod test
 
             scaled_rank_selector.update::<GAScaledScoreSelection>(&mut population);
 
-            // Best Scaled score is that of 2nd solution (because fitness is inverse of score). Weird. In this case, LowIsBest.
             assert_eq!(scaled_rank_selector.select::<GAScaledScoreSelection>(&population, &mut GARandomCtx::new_unseeded(String::from("test_rank_selector_rng"))).fitness(), i_f_m);
         }
         ga_test_teardown();

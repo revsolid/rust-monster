@@ -122,7 +122,7 @@ impl<T: GASolution> GAPopulation<T>
 
     pub fn best_by_scaled_score(&self) -> &T
     {
-        self.individual(0, GAPopulationSortBasis::Raw)
+        self.individual(0, GAPopulationSortBasis::Scaled)
     }
 
     pub fn worst_by_scaled_score(&self) -> &T
