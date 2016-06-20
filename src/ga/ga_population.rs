@@ -122,7 +122,7 @@ impl<T: GASolution> GAPopulation<T>
 
     pub fn best_by_scaled_score(&self) -> &T
     {
-        self.individual(0, GAPopulationSortBasis::Raw)
+        self.individual(0, GAPopulationSortBasis::Scaled)
     }
 
     pub fn worst_by_scaled_score(&self) -> &T
@@ -202,8 +202,66 @@ impl<T: GASolution> GAPopulation<T>
                 },
         };
     }
+
+    pub fn raw_score_iterator<'a>(&'a self) -> GAPopulationRawIterator<'a, T>
+    {
+        GAPopulationRawIterator { population: &self, next: 0 }
+    }
+
+    pub fn fitness_score_iterator<'a>(&'a self) -> GAPopulationFitnessIterator<'a, T>
+    {
+        GAPopulationFitnessIterator { population: &self, next: 0 }
+    }
 }
 
+pub struct GAPopulationRawIterator<'a, T: 'a + GASolution>
+{
+    population: &'a GAPopulation<T>,
+    next: usize
+}
+
+impl<'a, T: GASolution> Iterator for GAPopulationRawIterator<'a, T>
+{
+    type Item = &'a T;
+
+    fn next(&mut self) -> Option<Self::Item>
+    {
+        if self.next == self.population.size()
+        {
+            None
+        }
+        else
+        {
+            self.next = self.next + 1;
+            Some(self.population.individual(self.next - 1, GAPopulationSortBasis::Raw)) 
+        }
+    }
+}
+
+pub struct GAPopulationFitnessIterator<'a, T: 'a + GASolution>
+{
+    population: &'a GAPopulation<T>,
+    next: usize
+}
+
+impl<'a, T: GASolution> Iterator for GAPopulationFitnessIterator<'a, T>
+{
+    type Item = &'a T;
+
+    fn next(&mut self) -> Option<Self::Item>
+    {
+        if self.next == self.population.size()
+        {
+            None
+        }
+        else
+        {
+            self.next = self.next + 1;
+            Some(self.population.individual(self.next - 1, GAPopulationSortBasis::Scaled)) 
+        }
+    }
+
+}
 
 ////////////////////////////////////////
 // Tests
@@ -234,5 +292,80 @@ mod test
         ga_test_teardown();
     }
 
-    
+    #[test]
+    fn test_population_raw_iterator()
+    {
+        // Iteration of a LowIsBest population yields a sequence of non-decreasing raw scores.
+
+        let mut expected_seq: Vec<f32> = (1..10).map(|rs| rs as f32).collect();
+        {
+            let mut inds: Vec<GATestSolution> = Vec::new();
+            for rs in 1..10
+            {
+                inds.push(GATestSolution::new(rs as f32)); 
+            }
+            let mut pop = GAPopulation::new(inds, GAPopulationSortOrder::LowIsBest);
+            pop.sort();
+
+            let it = pop.raw_score_iterator();
+            let actual_seq: Vec<f32> = it.map(|ind| { ind.score() }).collect();
+            assert_eq!(expected_seq, actual_seq);
+        }
+
+        // Iteration of a HighIsBest population yields a sequence of non-increasing raw scores.
+
+        expected_seq.reverse();
+        {
+            let mut inds: Vec<GATestSolution> = Vec::new();
+            for rs in 1..10
+            {
+                inds.push(GATestSolution::new(rs as f32)); 
+            }
+            let mut pop = GAPopulation::new(inds, GAPopulationSortOrder::HighIsBest);
+            pop.sort();
+
+            let it = pop.raw_score_iterator();
+            let actual_seq: Vec<f32> = it.map(|ind| { ind.score() }).collect();
+            assert_eq!(expected_seq, actual_seq);
+        }
+    }
+
+    #[test]
+    fn test_population_fitness_iterator()
+    {
+        // Iteration of a HighIsBest population yields a sequence of non-decreasing fitness scores (when fitness = 1/raw).
+
+        let mut expected_seq: Vec<f32> = (1..10).map(|rs| 1.0/(rs as f32)).collect();
+        {
+            let mut inds: Vec<GATestSolution> = Vec::new();
+            for rs in 1..10
+            {
+                inds.push(GATestSolution::new(rs as f32)); 
+            }
+            let mut pop = GAPopulation::new(inds, GAPopulationSortOrder::HighIsBest);
+            pop.sort();
+
+            let it = pop.fitness_score_iterator();
+            let actual_seq: Vec<f32> = it.map(|ind| { ind.fitness() }).collect();
+            assert_eq!(expected_seq, actual_seq);
+        }
+
+        // Iteration of a LowIsBest population yields a sequence of non-increasing fitness scores (when fitness = 1/raw).
+
+        expected_seq.reverse();
+        {
+            let mut inds: Vec<GATestSolution> = Vec::new();
+            for rs in 1..10
+            {
+                inds.push(GATestSolution::new(rs as f32)); 
+            }
+            let mut pop = GAPopulation::new(inds, GAPopulationSortOrder::LowIsBest);
+            pop.sort();
+
+            let it = pop.fitness_score_iterator();
+            let actual_seq: Vec<f32> = it.map(|ind| { ind.fitness() }).collect();
+            assert_eq!(expected_seq, actual_seq);
+        }
+
+    }
 }

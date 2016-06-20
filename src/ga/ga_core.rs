@@ -43,7 +43,6 @@ pub trait GASolution
     fn new(f:f32) -> Self;
 
     // Instance
-    fn clone(&self) -> Self;
     fn crossover(&self, other : &Self) -> Self;
     fn mutate(&mut self, pMutation : f32);
     fn evaluate(&mut self) -> f32;
