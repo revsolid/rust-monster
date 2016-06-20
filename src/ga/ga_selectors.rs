@@ -167,11 +167,11 @@ impl<T: GASolution> GASelector<T> for GARankSelector
     }
 }
 
-pub struct GAUniformSelector;
-
 /// Uniform selector.
 ///
 /// Select an individual at random, with equal probability.
+pub struct GAUniformSelector;
+
 impl GAUniformSelector
 {
     pub fn new() -> GAUniformSelector
@@ -201,6 +201,10 @@ impl<T: GASolution> GASelector<T> for GAUniformSelector
 }
 
 /// Roulette Wheel selector.
+///
+/// Select an individual at random, each one having a probability of selection
+/// that is proportional to its score according to ranking (LowIsBest or 
+/// HighIsBest). 
 pub struct GARouletteWheelSelector
 {
     wheel_proportions: Vec<f32>,
@@ -210,10 +214,6 @@ impl GARouletteWheelSelector
 {
     pub fn new(p_size: usize) -> GARouletteWheelSelector
     {
-        // TODO: Comment doesn't look correct.
-        // vec![] borrows references (invocation of size() is through *p, or so the
-        // compiler says); since p has already been borrowed as a mutable reference
-        // (no data races allowed), p.size() can't be passed to vec![].
         let wheel_size = p_size;
 
         GARouletteWheelSelector
@@ -374,6 +374,7 @@ impl<T: GASolution> GASelector<T> for GATournamentSelector
         let individual1;
         let individual2;
 
+        // Select 2 individuals using Roulette Wheel selection.
         individual1 = self.roulette_wheel_selector.select::<S>(pop, rng_ctx);
         individual2 = self.roulette_wheel_selector.select::<S>(pop, rng_ctx);
 
@@ -389,6 +390,7 @@ impl<T: GASolution> GASelector<T> for GATournamentSelector
             high_score_individual = individual2;
         }
 
+        // Return the individual that is best according to population rank.
         match pop.order()
         {
             GAPopulationSortOrder::HighIsBest => high_score_individual,
