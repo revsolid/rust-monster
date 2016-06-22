@@ -87,16 +87,48 @@ impl GATestFactory
 }
 impl GAFactory<GATestIndividual> for GATestFactory
 {
-    fn random_population(&mut self, n: usize, sort_order: GAPopulationSortOrder,
-                         rng_ctx: &mut GARandomCtx) -> GAPopulation<GATestIndividual>
+    fn random_population(&mut self, n: usize, sort_order: GAPopulationSortOrder, rng_ctx: &mut GARandomCtx) -> GAPopulation<GATestIndividual>
     {
+        //let mut rng_ctx = GARandomCtx::from_seed([5,6,7,8], String::from("random_population"));
         let mut inds: Vec<GATestIndividual> = Vec::new();
 
         for _ in 0..n
         {
+            // FIXME: When rand_raw=0, statistics produce INFs when fitness=1/raw.
+            // Avoid zeroes for now.
+            let mut rand_raw: f32;
+            while { rand_raw = rng_ctx.gen::<f32>(); rand_raw == 0.0 } {}
+
             inds.push(GATestIndividual::new(rng_ctx.gen::<f32>()));
         }
 
         GAPopulation::new(inds, sort_order)
+    }
+
+    fn better_random_population_than(&mut self, pop: &GAPopulation<GATestIndividual>) -> GAPopulation<GATestIndividual>
+    {
+        let mut rng_ctx = GARandomCtx::from_seed([5,6,7,8], String::from("better_random_population"));
+
+        let mut inds: Vec<GATestIndividual> = Vec::new();
+
+        let best_raw = pop.best_by_raw_score().raw(); 
+
+        let sign = match pop.order()
+        {
+            GAPopulationSortOrder::HighIsBest => 1.0,
+            GAPopulationSortOrder::LowIsBest  => -1.0
+        };
+
+        for _ in 0..pop.size()
+        {
+            let mut raw: f32;
+            // Subtract when LowIsBest.
+            // FIXME: When rand_raw=0, statistics produce INFs when fitness=1/raw.
+            // Avoid zeroes for now.
+            while { raw = best_raw + rng_ctx.gen::<f32>() * sign; raw == 0.0 } {}
+            inds.push(GATestIndividual::new(raw));
+        }
+
+        GAPopulation::new(inds, pop.order())
     }
 }

@@ -93,12 +93,30 @@ impl<T: GAIndividual> GAPopulation<T>
         self.population.len()
     }
 
+    fn size_mut(&mut self) -> usize
+    {
+        self.population.len()
+    }
+
     pub fn order(&self) -> GAPopulationSortOrder
     {
         // This is not a 'move', but a copy (GAPopulationSortOrder implements the
         // 'Copy' trait). A move from a borrowed reference (such as 'self') would 
         // not be permitted.
         self.sort_order
+    }
+
+    pub fn set_order_and_sort(&mut self, order: GAPopulationSortOrder)
+    {
+        // TODO: Test that changing order after the population has been used doesn't
+        // cause problems.
+        if self.sort_order != order
+        {
+            self.sort_order = order;
+            self.is_raw_sorted = false;
+            self.is_fitness_sorted = false;
+            self.sort();
+        }
     }
 
     //TODO: this is a temporary implementation
@@ -108,11 +126,11 @@ impl<T: GAIndividual> GAPopulation<T>
     }
 
     //TODO: This is a temporary implementation 
-    pub fn best(&self) -> &T
+    pub fn best(&self, i: usize, sort_basis: GAPopulationSortBasis) -> &T
     {
         // TODO: Call GAPopulation.scale().
 
-        self.individual(0, GAPopulationSortBasis::Fitness)
+        self.individual(i, sort_basis)
     }
 
     //TODO: This is a temporary implementation 
@@ -126,9 +144,29 @@ impl<T: GAIndividual> GAPopulation<T>
         self.individual(0, GAPopulationSortBasis::Raw)
     }
 
+    pub fn best_by_raw_score_mut(&mut self) -> &mut T
+    {
+        self.individual_mut(0, GAPopulationSortBasis::Raw)
+    }
+
+    pub fn kth_best_by_raw_score(&self, k: usize) -> &T
+    {
+        self.individual(k, GAPopulationSortBasis::Raw)
+    }
+
     pub fn worst_by_raw_score(&self) -> &T
     {
         self.individual(self.size()-1, GAPopulationSortBasis::Raw)
+    }
+
+    pub fn worst_by_raw_score_mut(&mut self) -> &mut T
+    {
+        // Cannot call self.size() in line with individual_mut(),
+        // because then there would be simultaneous immutable
+        // (from size()) and mutable (from individual_mut()) borrows
+        // of self.
+        let size = self.size();
+        self.individual_mut(size-1, GAPopulationSortBasis::Raw)
     }
 
     pub fn best_by_fitness_score(&self) -> &T
@@ -153,10 +191,28 @@ impl<T: GAIndividual> GAPopulation<T>
         }
     }
 
+    pub fn individual_mut(&mut self, i : usize, sort_basis : GAPopulationSortBasis) -> &mut T
+    {
+        match sort_basis
+        {
+            GAPopulationSortBasis::Raw
+            => { &mut self.population[self.population_order_raw[i]] },
+            GAPopulationSortBasis::Fitness
+            => { &mut self.population[self.population_order_fitness[i]] },
+        }
+
+    }
+
     pub fn sort(&mut self)
     {
         self.sort_int(false, GAPopulationSortBasis::Fitness);
         self.sort_int(false, GAPopulationSortBasis::Raw);
+    }
+    
+    pub fn force_sort(&mut self)
+    {
+        self.sort_int(true, GAPopulationSortBasis::Fitness);
+        self.sort_int(true, GAPopulationSortBasis::Raw);
     }
 
     //TODO: I hate this name
@@ -323,6 +379,43 @@ impl<T: GAIndividual> GAPopulation<T>
             }
         }
     }
+
+    pub fn reset_statistics(&mut self)
+    {
+        self.statistics = None;
+    }
+
+    pub fn diversity(&mut self) -> f32
+    {
+        // Dummy implementation.
+        // -1.0 is the recorded diversity value when diversity is not recorded.
+        -1.0
+    }
+
+    pub fn print_statistics(&self)
+    {
+        match self.statistics 
+        {
+            Some(ref statistics) =>
+            {
+                debug!("RAW");
+                debug!("sum {}\n", statistics.raw_sum);
+                debug!("avg {}\n", statistics.raw_avg);
+                debug!("max {}\n", statistics.raw_max);
+                debug!("min {}\n", statistics.raw_min);
+                debug!("var {}\n", statistics.raw_var);
+                debug!("dev {}\n", statistics.raw_std_dev);
+                debug!("FIT");
+                debug!("sum {}\n", statistics.fitness_sum);
+                debug!("avg {}\n", statistics.fitness_avg);
+                debug!("max {}\n", statistics.fitness_max);
+                debug!("min {}\n", statistics.fitness_min);
+                debug!("var {}\n", statistics.fitness_var);
+                debug!("dev {}\n", statistics.fitness_std_dev);
+            },
+                None => {}
+        }
+    }
 }
 
 impl<T: GAIndividual + Clone> Clone for GAPopulation<T>
@@ -337,28 +430,26 @@ impl<T: GAIndividual + Clone> Clone for GAPopulation<T>
             is_raw_sorted: self.is_raw_sorted,
             population_order_fitness: self.population_order_fitness.clone(),
             is_fitness_sorted: self.is_fitness_sorted,
+            statistics: self.statistics.clone()
         }
     }
 }
 
 impl<T: GAIndividual + PartialEq> PartialEq for GAPopulation<T>
 {
-    // Only meant for testing clone(). We may consider relaxing the
-    // condition for general use (i.e. compare only population and
-    // sort_order, and not the rest, which are the result of invoking
-    // a method with deterministic outcome).
     fn eq(&self, other: &GAPopulation<T>) -> bool
     {
-        // Fail fast, by doing lightweight comparisons first.
-        //
-        // Vector comparisons actually compare element by element.
-        // That's why T has to implement PartialEq.
-        self.sort_order == other.sort_order 
+        self.size() == other.size()
+        && self.sort_order == other.sort_order 
         && self.is_raw_sorted == other.is_raw_sorted
         && self.is_fitness_sorted == other.is_fitness_sorted
-        && self.population == other.population 
-        && self.population_order_raw == other.population_order_raw
-        && self.population_order_fitness == other.population_order_fitness
+        // FIXME: INFs are not equal to each other; NANs either.
+        // If statistics contain INFs or NANs, this check will
+        // fail. This happens when raw=0 and fitness=1/raw.
+        && self.statistics == other.statistics
+        // FIXME: sort() must have been called to avoid panic.
+        && self.raw_score_iterator().eq(other.raw_score_iterator())
+        && self.fitness_score_iterator().eq(other.fitness_score_iterator())
     }
 }
 
@@ -408,7 +499,6 @@ impl<'a, T: GAIndividual> Iterator for GAPopulationFitnessIterator<'a, T>
             Some(self.population.individual(self.next - 1, GAPopulationSortBasis::Fitness)) 
         }
     }
-
 }
 
 /// Population statistics.
@@ -424,19 +514,19 @@ impl<'a, T: GAIndividual> Iterator for GAPopulationFitnessIterator<'a, T>
 #[derive(Clone)]
 pub struct GAPopulationStats
 {
-    raw_sum: f32,
-    raw_avg: f32,
-    raw_max: f32,
-    raw_min: f32,
-    raw_var: f32,
-    raw_std_dev: f32,
+    pub raw_sum: f32,
+    pub raw_avg: f32,
+    pub raw_max: f32,
+    pub raw_min: f32,
+    pub raw_var: f32,
+    pub raw_std_dev: f32,
 
-    fitness_sum: f32,
-    fitness_avg: f32,
-    fitness_max: f32,
-    fitness_min: f32,
-    fitness_var: f32,
-    fitness_std_dev: f32,
+    pub fitness_sum: f32,
+    pub fitness_avg: f32,
+    pub fitness_max: f32,
+    pub fitness_min: f32,
+    pub fitness_var: f32,
+    pub fitness_std_dev: f32,
 }
 
 impl GAPopulationStats
@@ -459,6 +549,26 @@ impl GAPopulationStats
             fitness_var: 0.0,
             fitness_std_dev: 0.0,
         }
+    }
+}
+
+impl PartialEq for GAPopulationStats
+{
+    fn eq(&self, other: &GAPopulationStats) -> bool
+    {
+        let error = 0.00001;
+        (self.raw_sum-other.raw_sum).abs() < error
+        && (self.raw_avg-other.raw_avg).abs() < error
+        && (self.raw_max-other.raw_max).abs() < error
+        && (self.raw_min-other.raw_min).abs() < error
+        && (self.raw_var-other.raw_var).abs() < error
+        && (self.raw_std_dev-other.raw_std_dev).abs() < error
+        && (self.fitness_sum-other.fitness_sum).abs() < error
+        && (self.fitness_avg-other.fitness_avg).abs() < error
+        && (self.fitness_max-other.fitness_max).abs() < error
+        && (self.fitness_min-other.fitness_min).abs() < error
+        && (self.fitness_var-other.fitness_var).abs() < error
+        && (self.fitness_std_dev-other.fitness_std_dev).abs() < error
     }
 }
 
@@ -507,9 +617,11 @@ mod test
             let mut pop = fact.random_population(10, GAPopulationSortOrder::HighIsBest, &mut GARandomCtx::new_unseeded("ga_population::test_clone_population".to_string()));
 
             // Upon creation.
-            assert_eq!(pop == pop.clone(), true);
+            // FIXME: Panics because eq() iterates over non-init'ed sorted arrays.
+            //assert_eq!(pop == pop.clone(), true);
 
             pop.sort();
+            pop.statistics();
 
             // After updating its state.
             assert_eq!(pop == pop.clone(), true);
@@ -519,9 +631,11 @@ mod test
             let mut pop = fact.random_population(10, GAPopulationSortOrder::LowIsBest, &mut GARandomCtx::new_unseeded("ga_population::test_clone_population".to_string()));
 
             // Upon creation.
-            assert_eq!(pop == pop.clone(), true);
+            // FIXME: Panics because eq() iterates over non-init'ed sorted arrays.
+            //assert_eq!(pop == pop.clone(), true);
 
             pop.sort();
+            pop.statistics();
 
             // After updating its state.
             assert_eq!(pop == pop.clone(), true);

@@ -2,7 +2,7 @@
 // author(s): sysnett
 // rust-monster is licensed under a MIT License.
 use ::ga::ga_core::{GAFactory, GAFlags, GeneticAlgorithm, GAIndividual};
-use ::ga::ga_population::{GAPopulation, GAPopulationSortOrder};
+use ::ga::ga_population::{GAPopulation, GAPopulationSortBasis, GAPopulationSortOrder};
 use ::ga::ga_random::{GARandomCtx, GASeed};
 use ::ga::ga_selectors::*;
 
@@ -137,7 +137,7 @@ impl<'a, T: GAIndividual + Clone> GeneticAlgorithm<T> for SimpleGeneticAlgorithm
             new_individuals.push(new_ind);
         }
 
-        let best_old_individual = self.population.best().clone();
+        let best_old_individual = self.population.best(0, GAPopulationSortBasis::Fitness).clone();
 
         // Evaluate the new population
         // TODO: Archive the old population
@@ -157,7 +157,6 @@ impl<'a, T: GAIndividual + Clone> GeneticAlgorithm<T> for SimpleGeneticAlgorithm
             }
         }
         self.population.sort();
-
 
         if self.config.elitism
         {
