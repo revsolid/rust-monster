@@ -4,21 +4,21 @@
 
 //! GA Scaling Schemes
 //!
-//! Scales the raw score of a Population's individuals.
+//! Scales the raw score of a population's individuals.
 
 use super::ga_core::GAIndividual;
 use super::ga_population::GAPopulation;
 
 /// Scaling Scheme Trait
 /// 
-/// Embeeded in the population, scales the values of raw score in a
+/// Embedded in the population, scales the values of raw score in a
 /// GAIndividual to set their fitness score
 pub trait GAScaling<T: GAIndividual>
 {
     fn evaluate(&self, pop: &mut GAPopulation<T>);
 }
 
-/// No Scaling - Raw and Scaled are the same
+/// No Scaling - raw and fitness are the same
 pub struct GANoScaling;
 
 impl<T: GAIndividual> GAScaling<T> for GANoScaling

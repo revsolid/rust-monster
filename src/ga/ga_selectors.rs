@@ -51,7 +51,7 @@ pub trait GASelector<T: GAIndividual>
 /// Selection score type basis.
 ///
 /// Selectors are configured, at the time of creation, with the type of score
-/// {RAW, SCALED} they will use to perform selections. The type of score
+/// {raw, fitness} they will use to perform selections. The type of score
 /// ultimately determines the function that will be invoked on the `GAIndividual`
 /// to obtain the score value of the configured type. `GAScoreSelection`
 /// objects provide a unified interface to the different score functions of a
@@ -71,7 +71,7 @@ pub trait GAScoreSelection<T: GAIndividual>
     fn iterator<'a>(pop: &'a GAPopulation<T>) -> Box<Iterator<Item=&'a T> + 'a>;
 }
 
-/// Selection based on RAW score.
+/// Selection based on raw score.
 pub struct GARawScoreSelection;
 
 impl<T: GAIndividual> GAScoreSelection<T> for GARawScoreSelection
@@ -102,10 +102,10 @@ impl<T: GAIndividual> GAScoreSelection<T> for GARawScoreSelection
     }
 }
 
-/// Selection based on SCALED score.
-pub struct GAScaledScoreSelection;
+/// Selection based on fitness score.
+pub struct GAFitnessScoreSelection;
 
-impl<T: GAIndividual> GAScoreSelection<T> for GAScaledScoreSelection
+impl<T: GAIndividual> GAScoreSelection<T> for GAFitnessScoreSelection
 {
     fn score(ind: &T) -> f32
     {
@@ -114,17 +114,17 @@ impl<T: GAIndividual> GAScoreSelection<T> for GAScaledScoreSelection
 
     fn population_sort_basis() -> GAPopulationSortBasis
     {
-        GAPopulationSortBasis::Scaled
+        GAPopulationSortBasis::Fitness
     }
 
     fn max_score(pop: &GAPopulation<T>) -> f32
     {
-        Self::score(pop.best_by_scaled_score())
+        Self::score(pop.best_by_fitness_score())
     }
 
     fn min_score(pop: &GAPopulation<T>) -> f32
     {
-        Self::score(pop.worst_by_scaled_score())
+        Self::score(pop.worst_by_fitness_score())
     }
 
     fn iterator<'a>(pop: &'a GAPopulation<T>) -> Box<Iterator<Item=&'a T> + 'a>
@@ -193,7 +193,7 @@ impl<T: GAIndividual> GASelector<T> for GAUniformSelector
     fn select<'a, S: GAScoreSelection<T>>(&self, pop: &'a GAPopulation<T>, rng_ctx: &mut GARandomCtx) -> &'a T
     {
         // Since selection is at random, it doesn't matter where the individual
-        // is drawn from, the Raw/score-sorted or the Scaled/fitness-sorted list.
+        // is drawn from, the raw-score-sorted or the fitness-score-sorted list.
         pop.individual(
             rng_ctx.gen_range(0, pop.size()),
             GAPopulationSortBasis::Raw)
@@ -436,11 +436,11 @@ mod test
         }
 
         {
-            let mut scaled_rank_selector = GARankSelector::new();
+            let mut fitness_rank_selector = GARankSelector::new();
 
-            scaled_rank_selector.update::<GAScaledScoreSelection>(&mut population);
+            fitness_rank_selector.update::<GAFitnessScoreSelection>(&mut population);
 
-            assert_eq!(scaled_rank_selector.select::<GAScaledScoreSelection>(&population, &mut GARandomCtx::new_unseeded(String::from("test_rank_selector_rng"))).fitness(), i_f_m);
+            assert_eq!(fitness_rank_selector.select::<GAFitnessScoreSelection>(&population, &mut GARandomCtx::new_unseeded(String::from("test_rank_selector_rng"))).fitness(), i_f_m);
         }
         ga_test_teardown();
     }
@@ -496,12 +496,12 @@ mod test
         }
         
         {
-            let mut scaled_roulette_wheel_selector 
+            let mut fitness_roulette_wheel_selector 
               = GARouletteWheelSelector::new(population.size());
 
-            scaled_roulette_wheel_selector.update::<GAScaledScoreSelection>(&mut population);
+            fitness_roulette_wheel_selector.update::<GAFitnessScoreSelection>(&mut population);
 
-            scaled_roulette_wheel_selector.select::<GAScaledScoreSelection>(&population, &mut rng_ctx);
+            fitness_roulette_wheel_selector.select::<GAFitnessScoreSelection>(&population, &mut rng_ctx);
         }
         ga_test_teardown();
     }
@@ -535,12 +535,12 @@ mod test
         }
 
         {
-            let mut scaled_tournament_selector 
+            let mut fitness_tournament_selector 
               = GARouletteWheelSelector::new(population.size());
 
-            scaled_tournament_selector.update::<GAScaledScoreSelection>(&mut population);
+            fitness_tournament_selector.update::<GAFitnessScoreSelection>(&mut population);
 
-            scaled_tournament_selector.select::<GAScaledScoreSelection>(&population, &mut rng_ctx);
+            fitness_tournament_selector.select::<GAFitnessScoreSelection>(&population, &mut rng_ctx);
         }
         ga_test_teardown();
     }

@@ -46,10 +46,10 @@ pub trait GAIndividual
     fn crossover(&self, other : &Self) -> Self;
     fn mutate(&mut self, pMutation : f32);
     fn evaluate(&mut self) -> f32;
-    // Scaled fitness score
+    // Fitness score
     fn fitness(&self) -> f32;
     fn set_fitness(&mut self, f : f32);
-    // Raw objective score
+    // Raw score
     fn score(&self) -> f32;
 }
 
