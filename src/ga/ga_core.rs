@@ -36,8 +36,8 @@ pub trait GAConfig
 }
 
 
-/// Genetic Algorithm Solution
-pub trait GASolution
+/// Genetic Algorithm Individual
+pub trait GAIndividual
 {
     //Static
     fn new(f:f32) -> Self;
@@ -54,8 +54,8 @@ pub trait GASolution
 }
 
 
-/// Genetic Algorithm Solution Factory
-pub trait GAFactory<T: GASolution>
+/// Genetic Algorithm Individual Factory
+pub trait GAFactory<T: GAIndividual>
 {
     fn initial_population(&mut self) -> GAPopulation<T> 
     {
@@ -65,7 +65,7 @@ pub trait GAFactory<T: GASolution>
 
 
 /// Genetic Algorithm
-pub trait GeneticAlgorithm<T: GASolution>
+pub trait GeneticAlgorithm<T: GAIndividual>
 {
     // GENERIC GA METHODS - Should not be overriden frequently
     fn initialize(&mut self)

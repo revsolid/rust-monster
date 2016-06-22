@@ -1,0 +1,8 @@
+Selectors
+---------
+GARankSelector.select():
+  - Dependencies:
+    - GAPopulation.best()
+    - GASolution.fitness()
+    - GASolution.score()
+    - GAPopulation.sort()

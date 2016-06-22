@@ -1,7 +1,7 @@
 // Copyright 2016 Revolution Solid & Contributors.
 // author(s): sysnett
 // rust-monster is licensed under a MIT License.
-use super::ga_core::{GAConfig, GAFactory, GAFlags, GeneticAlgorithm, GASolution};
+use super::ga_core::{GAConfig, GAFactory, GAFlags, GeneticAlgorithm, GAIndividual};
 use super::ga_population::GAPopulation;
 use super::ga_random::{GARandomCtx, GASeed};
 
@@ -70,14 +70,14 @@ impl SimpleGeneticAlgorithmCfg
 /// Elitism is optional. By default, elitism is on, meaning that the best individual 
 /// from each generation is carried over to the next generation.
 ///
-pub struct SimpleGeneticAlgorithm<T: GASolution>
+pub struct SimpleGeneticAlgorithm<T: GAIndividual>
 {
   current_generation : i32, 
   config : SimpleGeneticAlgorithmCfg,
   population : GAPopulation<T>,
   rng_ctx : GARandomCtx,
 }
-impl<T: GASolution> SimpleGeneticAlgorithm<T>
+impl<T: GAIndividual> SimpleGeneticAlgorithm<T>
 {
     // TODO: Document this -new- pattern and others from the
     // pattern GitHub
@@ -110,7 +110,7 @@ impl<T: GASolution> SimpleGeneticAlgorithm<T>
         SimpleGeneticAlgorithm { current_generation: 0, config : cfg, population : p, rng_ctx : GARandomCtx::from_seed(cfg.d_seed, String::from("")) }
     }
 }
-impl<T: GASolution + Clone> GeneticAlgorithm<T> for SimpleGeneticAlgorithm <T>
+impl<T: GAIndividual + Clone> GeneticAlgorithm<T> for SimpleGeneticAlgorithm <T>
 {
     fn config(&mut self) -> &GAConfig
     {
@@ -183,7 +183,7 @@ mod tests
     use super::super::ga_core::*;
     use super::*;
 
-    fn simple_ga_validation(sga:&mut SimpleGeneticAlgorithm<GATestSolution>)
+    fn simple_ga_validation(sga:&mut SimpleGeneticAlgorithm<GATestIndividual>)
     {
         sga.initialize();
         assert_eq!(sga.step(), 1);
@@ -196,9 +196,9 @@ mod tests
     fn init_test_with_initial_population()
     {
         ga_test_setup("ga_simple::init_test_with_initial_population");
-        let initial_population = GAPopulation::new(vec![GATestSolution::new(GA_TEST_FITNESS_VAL)],
+        let initial_population = GAPopulation::new(vec![GATestIndividual::new(GA_TEST_FITNESS_VAL)],
                                  GAPopulationSortOrder::HighIsBest);
-        let mut ga : SimpleGeneticAlgorithm<GATestSolution> =
+        let mut ga : SimpleGeneticAlgorithm<GATestIndividual> =
                      SimpleGeneticAlgorithm::new(SimpleGeneticAlgorithmCfg {
                                                    d_seed : [1; 4],
                                                    flags : DEBUG_FLAG,
@@ -216,14 +216,14 @@ mod tests
     {
         ga_test_setup("ga_simple::init_test_with_factory");
         let mut factory = GATestFactory::new(GA_TEST_FITNESS_VAL);
-        let mut ga : SimpleGeneticAlgorithm<GATestSolution> =
+        let mut ga : SimpleGeneticAlgorithm<GATestIndividual> =
                      SimpleGeneticAlgorithm::new(SimpleGeneticAlgorithmCfg {
                                                    d_seed : [1; 4],
                                                    flags : DEBUG_FLAG,
                                                    max_generations: 100,
                                                    ..Default::default()
                                                  },
-                                                 Some(&mut factory as &mut GAFactory<GATestSolution>),
+                                                 Some(&mut factory as &mut GAFactory<GATestIndividual>),
                                                  None
                                                  );
         simple_ga_validation(&mut ga);
@@ -236,7 +236,7 @@ mod tests
     fn init_test_missing_args()
     {
         ga_test_setup("ga_simple::init_test_missing_args");
-        let ga : SimpleGeneticAlgorithm<GATestSolution> =
+        let ga : SimpleGeneticAlgorithm<GATestIndividual> =
                  SimpleGeneticAlgorithm::new(SimpleGeneticAlgorithmCfg {
                                                d_seed : [1; 4],
                                                flags : DEBUG_FLAG,
@@ -255,8 +255,8 @@ mod tests
     fn init_test_empty_initial_pop()
     {
         ga_test_setup("ga_simple::init_test_empty_initial_pop");
-        let empty_initial_population : GAPopulation<GATestSolution> = GAPopulation::new(vec![], GAPopulationSortOrder::HighIsBest);
-        let mut ga : SimpleGeneticAlgorithm<GATestSolution> =
+        let empty_initial_population : GAPopulation<GATestIndividual> = GAPopulation::new(vec![], GAPopulationSortOrder::HighIsBest);
+        let mut ga : SimpleGeneticAlgorithm<GATestIndividual> =
                      SimpleGeneticAlgorithm::new(SimpleGeneticAlgorithmCfg {
                                                    d_seed : [1; 4],
                                                    flags : DEBUG_FLAG,

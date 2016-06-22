@@ -4,7 +4,7 @@
 
 //! Genetic Algorithm Population
 
-use super::ga_core::GASolution;
+use super::ga_core::GAIndividual;
 
 use std::cmp::Ordering;
 use std::iter::FromIterator;
@@ -27,7 +27,7 @@ pub enum GAPopulationSortOrder
 }
 
 /// Genetic Algorithm Population
-pub struct GAPopulation<T: GASolution>
+pub struct GAPopulation<T: GAIndividual>
 {
     population: Vec<T>,
 
@@ -46,7 +46,7 @@ pub struct GAPopulation<T: GASolution>
     // We keep 2 lists of indexes to the population vector.
     // One sorted by Raw Score and one by Scaled Score (Fitness).
 }
-impl<T: GASolution> GAPopulation<T>
+impl<T: GAIndividual> GAPopulation<T>
 {
     // TODO: New should use some parameters, maybe a Config
     pub fn new(p: Vec<T>, order: GAPopulationSortOrder) -> GAPopulation<T>
@@ -214,13 +214,13 @@ impl<T: GASolution> GAPopulation<T>
     }
 }
 
-pub struct GAPopulationRawIterator<'a, T: 'a + GASolution>
+pub struct GAPopulationRawIterator<'a, T: 'a + GAIndividual>
 {
     population: &'a GAPopulation<T>,
     next: usize
 }
 
-impl<'a, T: GASolution> Iterator for GAPopulationRawIterator<'a, T>
+impl<'a, T: GAIndividual> Iterator for GAPopulationRawIterator<'a, T>
 {
     type Item = &'a T;
 
@@ -238,13 +238,13 @@ impl<'a, T: GASolution> Iterator for GAPopulationRawIterator<'a, T>
     }
 }
 
-pub struct GAPopulationFitnessIterator<'a, T: 'a + GASolution>
+pub struct GAPopulationFitnessIterator<'a, T: 'a + GAIndividual>
 {
     population: &'a GAPopulation<T>,
     next: usize
 }
 
-impl<'a, T: GASolution> Iterator for GAPopulationFitnessIterator<'a, T>
+impl<'a, T: GAIndividual> Iterator for GAPopulationFitnessIterator<'a, T>
 {
     type Item = &'a T;
 
@@ -281,10 +281,10 @@ mod test
         let i_f = 1.0 / f;
         let i_f_m = 1.0 / f_m;
 
-        let mut population = GAPopulation::new(vec![GATestSolution::new(f), GATestSolution::new(f_m)], GAPopulationSortOrder::HighIsBest);
+        let mut population = GAPopulation::new(vec![GATestIndividual::new(f), GATestIndividual::new(f_m)], GAPopulationSortOrder::HighIsBest);
         population.sort();
 
-        //GATestSolution's Fitness is the inverse of the Score (F = 1/S)
+        //GATestIndividual's Fitness is the inverse of the Score (F = 1/S)
         assert_eq!(population.individual(0, GAPopulationSortBasis::Raw).score(), f);
         assert_eq!(population.individual(1, GAPopulationSortBasis::Raw).score(), f_m);
         assert_eq!(population.individual(0, GAPopulationSortBasis::Scaled).fitness(), i_f_m);
@@ -299,10 +299,10 @@ mod test
 
         let mut expected_seq: Vec<f32> = (1..10).map(|rs| rs as f32).collect();
         {
-            let mut inds: Vec<GATestSolution> = Vec::new();
+            let mut inds: Vec<GATestIndividual> = Vec::new();
             for rs in 1..10
             {
-                inds.push(GATestSolution::new(rs as f32)); 
+                inds.push(GATestIndividual::new(rs as f32)); 
             }
             let mut pop = GAPopulation::new(inds, GAPopulationSortOrder::LowIsBest);
             pop.sort();
@@ -316,10 +316,10 @@ mod test
 
         expected_seq.reverse();
         {
-            let mut inds: Vec<GATestSolution> = Vec::new();
+            let mut inds: Vec<GATestIndividual> = Vec::new();
             for rs in 1..10
             {
-                inds.push(GATestSolution::new(rs as f32)); 
+                inds.push(GATestIndividual::new(rs as f32)); 
             }
             let mut pop = GAPopulation::new(inds, GAPopulationSortOrder::HighIsBest);
             pop.sort();
@@ -337,10 +337,10 @@ mod test
 
         let mut expected_seq: Vec<f32> = (1..10).map(|rs| 1.0/(rs as f32)).collect();
         {
-            let mut inds: Vec<GATestSolution> = Vec::new();
+            let mut inds: Vec<GATestIndividual> = Vec::new();
             for rs in 1..10
             {
-                inds.push(GATestSolution::new(rs as f32)); 
+                inds.push(GATestIndividual::new(rs as f32)); 
             }
             let mut pop = GAPopulation::new(inds, GAPopulationSortOrder::HighIsBest);
             pop.sort();
@@ -354,10 +354,10 @@ mod test
 
         expected_seq.reverse();
         {
-            let mut inds: Vec<GATestSolution> = Vec::new();
+            let mut inds: Vec<GATestIndividual> = Vec::new();
             for rs in 1..10
             {
-                inds.push(GATestSolution::new(rs as f32)); 
+                inds.push(GATestIndividual::new(rs as f32)); 
             }
             let mut pop = GAPopulation::new(inds, GAPopulationSortOrder::LowIsBest);
             pop.sort();
