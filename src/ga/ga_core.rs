@@ -36,8 +36,8 @@ pub trait GAConfig
 }
 
 
-/// Genetic Algorithm Solution
-pub trait GASolution
+/// Genetic Algorithm Individual
+pub trait GAIndividual
 {
     //Static
     fn new(f:f32) -> Self;
@@ -46,16 +46,16 @@ pub trait GASolution
     fn crossover(&self, other : &Self) -> Self;
     fn mutate(&mut self, pMutation : f32);
     fn evaluate(&mut self) -> f32;
-    // Scaled fitness score
+    // Fitness score
     fn fitness(&self) -> f32;
     fn set_fitness(&mut self, f : f32);
-    // Raw objective score
+    // Raw score
     fn score(&self) -> f32;
 }
 
 
-/// Genetic Algorithm Solution Factory
-pub trait GAFactory<T: GASolution>
+/// Genetic Algorithm Individual Factory
+pub trait GAFactory<T: GAIndividual>
 {
     fn initial_population(&mut self) -> GAPopulation<T> 
     {
@@ -65,7 +65,7 @@ pub trait GAFactory<T: GASolution>
 
 
 /// Genetic Algorithm
-pub trait GeneticAlgorithm<T: GASolution>
+pub trait GeneticAlgorithm<T: GAIndividual>
 {
     // GENERIC GA METHODS - Should not be overriden frequently
     fn initialize(&mut self)

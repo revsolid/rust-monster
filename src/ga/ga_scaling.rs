@@ -4,24 +4,24 @@
 
 //! GA Scaling Schemes
 //!
-//! Scales the raw score of a Population's individuals.
+//! Scales the raw score of a population's individuals.
 
-use super::ga_core::GASolution;
+use super::ga_core::GAIndividual;
 use super::ga_population::GAPopulation;
 
 /// Scaling Scheme Trait
 /// 
-/// Embeeded in the population, scales the values of raw score in a
-/// GASolution to set their fitness score
-pub trait GAScaling<T: GASolution>
+/// Embedded in the population, scales the values of raw score in a
+/// GAIndividual to set their fitness score
+pub trait GAScaling<T: GAIndividual>
 {
     fn evaluate(&self, pop: &mut GAPopulation<T>);
 }
 
-/// No Scaling - Raw and Scaled are the same
+/// No Scaling - raw and fitness are the same
 pub struct GANoScaling;
 
-impl<T: GASolution> GAScaling<T> for GANoScaling
+impl<T: GAIndividual> GAScaling<T> for GANoScaling
 {
     fn evaluate(&self, pop: &mut GAPopulation<T>)
     {
@@ -77,7 +77,7 @@ impl GALinearScaling
     }
 }
 
-impl<T: GASolution> GAScaling<T> for GALinearScaling
+impl<T: GAIndividual> GAScaling<T> for GALinearScaling
 {
     fn evaluate(&self, pop : &mut GAPopulation<T>)
     {
@@ -114,7 +114,7 @@ mod test
     {
         ga_test_setup("ga_scaling::no_scaling");
         let f = GA_TEST_FITNESS_VAL;
-        let mut population = GAPopulation::new(vec![GATestSolution::new(f)], GAPopulationSortOrder::HighIsBest);
+        let mut population = GAPopulation::new(vec![GATestIndividual::new(f)], GAPopulationSortOrder::HighIsBest);
         population.sort();
 
         let scaler = GANoScaling;
@@ -132,7 +132,7 @@ mod test
     {
         ga_test_setup("ga_scaling::no_scaling");
         let f = GA_TEST_FITNESS_VAL;
-        let mut population = GAPopulation::new(vec![GATestSolution::new(f)], GAPopulationSortOrder::HighIsBest);
+        let mut population = GAPopulation::new(vec![GATestIndividual::new(f)], GAPopulationSortOrder::HighIsBest);
         population.sort();
 
         let scaler = GALinearScaling{ multiplier: super::GA_LINEAR_SCALING_MULTIPLIER };
