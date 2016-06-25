@@ -47,14 +47,14 @@ pub fn ga_test_teardown(){}
 #[derive(Clone)]
 pub struct GATestIndividual
 {
-    score: f32,
+    raw: f32,
     fitness: f32
 }
 impl GAIndividual for GATestIndividual 
 {
     fn new(rs:f32) -> GATestIndividual
     {
-        GATestIndividual{ score: rs, fitness: 1.0/rs }
+        GATestIndividual{ raw: rs, fitness: 1.0/rs }
     }
 
     fn evaluate(&mut self) -> f32 { self.fitness }
@@ -62,7 +62,7 @@ impl GAIndividual for GATestIndividual
     fn mutate(&mut self, _: f32) {}
     fn fitness(&self) -> f32 { self.fitness }
     fn set_fitness(&mut self, fitness:f32) { self.fitness = fitness; }
-    fn score(&self) -> f32 { self.score}
+    fn raw(&self) -> f32 { self.raw }
 }
 
 pub struct GATestFactory

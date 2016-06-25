@@ -189,7 +189,7 @@ mod tests
         assert_eq!(sga.step(), 1);
         assert_eq!(sga.done(), false);
         assert_eq!(sga.population().size(), 1);
-        assert_eq!(sga.population().best().score(), GA_TEST_FITNESS_VAL);
+        assert_eq!(sga.population().best().raw(), GA_TEST_FITNESS_VAL);
     }
 
     #[test]

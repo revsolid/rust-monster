@@ -29,7 +29,7 @@ impl<T: GAIndividual> GAScaling<T> for GANoScaling
         let pop_vec = pop.population();
         for ind in pop_vec
         {
-            let rs = ind.score();
+            let rs = ind.raw();
             ind.set_fitness(rs); 
         }
     }
@@ -81,8 +81,8 @@ impl<T: GAIndividual> GAScaling<T> for GALinearScaling
 {
     fn evaluate(&self, pop : &mut GAPopulation<T>)
     {
-        let max = pop.best_by_raw_score().score();
-        let min = pop.worst_by_raw_score().score();
+        let max = pop.best_by_raw_score().raw();
+        let min = pop.worst_by_raw_score().raw();
 
         // TODO: avg should be part of GAPopulation
         let avg = (max - min) / 2.0;
@@ -92,7 +92,7 @@ impl<T: GAIndividual> GAScaling<T> for GALinearScaling
         let pop_vec = pop.population();
         for ind in pop_vec
         {
-            let rs = ind.score();
+            let rs = ind.raw();
             ind.set_fitness(a*rs+b); 
         }
     }
@@ -122,7 +122,7 @@ mod test
         scaler.evaluate(&mut population);
 
         assert_eq!(population.individual(0, GAPopulationSortBasis::Raw).fitness(),
-                   population.individual(0, GAPopulationSortBasis::Raw).score());
+                   population.individual(0, GAPopulationSortBasis::Raw).raw());
 
         ga_test_teardown();
     }
@@ -141,7 +141,7 @@ mod test
 
         // TODO: Real test
         assert!(population.individual(0, GAPopulationSortBasis::Raw).fitness() !=
-                population.individual(0, GAPopulationSortBasis::Raw).score());
+                population.individual(0, GAPopulationSortBasis::Raw).raw());
 
         ga_test_teardown();
     }

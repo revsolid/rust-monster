@@ -78,7 +78,7 @@ impl<T: GAIndividual> GAScoreSelection<T> for GARawScoreSelection
 {
     fn score(ind: &T) -> f32
     {
-        ind.score()
+        ind.raw()
     }
 
     fn population_sort_basis() -> GAPopulationSortBasis
@@ -432,7 +432,7 @@ mod test
             raw_rank_selector.update::<GARawScoreSelection>(&mut population);
 
             // Best Raw score is that of 1st individual.
-            assert_eq!(raw_rank_selector.select::<GARawScoreSelection>(&population, &mut GARandomCtx::new_unseeded(String::from("test_rank_selector_rng"))).score(), f);
+            assert_eq!(raw_rank_selector.select::<GARawScoreSelection>(&population, &mut GARandomCtx::new_unseeded(String::from("test_rank_selector_rng"))).raw(), f);
         }
 
         {
@@ -462,7 +462,7 @@ mod test
         uniform_selector.update::<GARawScoreSelection>(&mut population);
 
         let selected_individual = uniform_selector.select::<GARawScoreSelection>(&population, &mut GARandomCtx::new_unseeded(String::from("test_rank_selector_rng")));
-        assert!(selected_individual.score() == f || selected_individual.score() == f_m);  
+        assert!(selected_individual.raw() == f || selected_individual.raw() == f_m);  
         ga_test_teardown();
     }
 

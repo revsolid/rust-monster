@@ -162,15 +162,15 @@ impl<T: GAIndividual> GAPopulation<T>
                         GAPopulationSortOrder::LowIsBest =>
                         {
                             ordered.sort_by(|s1: &usize, s2: &usize|
-                                            self.population[*s1].score()
-                                                .partial_cmp(&self.population[*s2].score()).unwrap_or(Ordering::Equal));
+                                            self.population[*s1].raw()
+                                                .partial_cmp(&self.population[*s2].raw()).unwrap_or(Ordering::Equal));
 
                         },
                         GAPopulationSortOrder::HighIsBest =>
                         {
                             ordered.sort_by(|s1: &usize, s2: &usize|
-                                            self.population[*s2].score()
-                                                .partial_cmp(&self.population[*s1].score()).unwrap_or(Ordering::Equal));
+                                            self.population[*s2].raw()
+                                                .partial_cmp(&self.population[*s1].raw()).unwrap_or(Ordering::Equal));
                                                                   
                         },
                     };
@@ -285,8 +285,8 @@ mod test
         population.sort();
 
         //GATestIndividual's Fitness is the inverse of the Score (F = 1/S)
-        assert_eq!(population.individual(0, GAPopulationSortBasis::Raw).score(), f);
-        assert_eq!(population.individual(1, GAPopulationSortBasis::Raw).score(), f_m);
+        assert_eq!(population.individual(0, GAPopulationSortBasis::Raw).raw(), f);
+        assert_eq!(population.individual(1, GAPopulationSortBasis::Raw).raw(), f_m);
         assert_eq!(population.individual(0, GAPopulationSortBasis::Fitness).fitness(), i_f_m);
         assert_eq!(population.individual(1, GAPopulationSortBasis::Fitness).fitness(), i_f);
         ga_test_teardown();
@@ -308,7 +308,7 @@ mod test
             pop.sort();
 
             let it = pop.raw_score_iterator();
-            let actual_seq: Vec<f32> = it.map(|ind| { ind.score() }).collect();
+            let actual_seq: Vec<f32> = it.map(|ind| { ind.raw() }).collect();
             assert_eq!(expected_seq, actual_seq);
         }
 
@@ -325,7 +325,7 @@ mod test
             pop.sort();
 
             let it = pop.raw_score_iterator();
-            let actual_seq: Vec<f32> = it.map(|ind| { ind.score() }).collect();
+            let actual_seq: Vec<f32> = it.map(|ind| { ind.raw() }).collect();
             assert_eq!(expected_seq, actual_seq);
         }
     }
