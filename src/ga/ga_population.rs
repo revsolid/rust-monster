@@ -117,7 +117,7 @@ impl<T: GAIndividual> GAPopulation<T>
 
     pub fn worst_by_raw_score(&self) -> &T
     {
-        self.individual(self.size()-1, GAPopulationSortBasis::Fitness)
+        self.individual(self.size()-1, GAPopulationSortBasis::Raw)
     }
 
     pub fn best_by_fitness_score(&self) -> &T
