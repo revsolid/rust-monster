@@ -50,7 +50,7 @@ pub trait GAIndividual
     fn fitness(&self) -> f32;
     fn set_fitness(&mut self, f : f32);
     // Raw score
-    fn score(&self) -> f32;
+    fn raw(&self) -> f32;
 }
 
 
