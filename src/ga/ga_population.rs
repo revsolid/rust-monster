@@ -4,7 +4,7 @@
 
 //! Genetic Algorithm Population
 
-use ::ga::ga_core::GASolution;
+use ::ga::ga_core::GAIndividual;
 
 use std::cmp::Ordering;
 use std::iter::FromIterator;
@@ -14,7 +14,7 @@ use std::iter::FromIterator;
 pub enum GAPopulationSortBasis
 {
     Raw,
-    Scaled,
+    Fitness,
 }
 
 // The 'Copy' trait requires the 'Clone' trait.
@@ -27,26 +27,26 @@ pub enum GAPopulationSortOrder
 }
 
 /// Genetic Algorithm Population
-pub struct GAPopulation<T: GASolution>
+pub struct GAPopulation<T: GAIndividual>
 {
     population: Vec<T>,
 
     sort_order: GAPopulationSortOrder,
 
-    // 'population' ordered by Raw score.
+    // 'population' ordered by raw score.
     population_order_raw: Vec<usize>,
     // Is 'population_order_raw' sorted?
     is_raw_sorted: bool,
 
-    // 'population' ordered by Scaled score.
-    population_order_scaled: Vec<usize>,
-    // Is 'population_scaled' sorted?
-    is_scaled_sorted: bool,
+    // 'population' ordered by fitness score.
+    population_order_fitness: Vec<usize>,
+    // Is 'population_order_fitness' sorted?
+    is_fitness_sorted: bool,
 
     // We keep 2 lists of indexes to the population vector.
-    // One sorted by Raw Score and one by Scaled Score (Fitness).
+    // One sorted by raw score and one by fitness score.
 }
-impl<T: GASolution> GAPopulation<T>
+impl<T: GAIndividual> GAPopulation<T>
 {
     // TODO: New should use some parameters, maybe a Config
     pub fn new(p: Vec<T>, order: GAPopulationSortOrder) -> GAPopulation<T>
@@ -57,8 +57,8 @@ impl<T: GASolution> GAPopulation<T>
                       sort_order: order,
                       population_order_raw: vec![],
                       is_raw_sorted: false,
-                      population_order_scaled: vec![],
-                      is_scaled_sorted: false
+                      population_order_fitness: vec![],
+                      is_fitness_sorted: false
                   };
 
         gap
@@ -93,7 +93,7 @@ impl<T: GASolution> GAPopulation<T>
     //TODO: this is a temporary implementation
     pub fn select(&self) -> &T
     {
-        self.individual(0, GAPopulationSortBasis::Scaled)
+        self.individual(0, GAPopulationSortBasis::Fitness)
     }
 
     //TODO: This is a temporary implementation 
@@ -101,13 +101,13 @@ impl<T: GASolution> GAPopulation<T>
     {
         // TODO: Call GAPopulation.scale().
 
-        self.individual(0, GAPopulationSortBasis::Scaled)
+        self.individual(0, GAPopulationSortBasis::Fitness)
     }
 
     //TODO: This is a temporary implementation 
     pub fn worst(&self) -> &T
     {
-        self.individual(self.size()-1, GAPopulationSortBasis::Scaled)
+        self.individual(self.size()-1, GAPopulationSortBasis::Fitness)
     }
 
     pub fn best_by_raw_score(&self) -> &T
@@ -117,17 +117,17 @@ impl<T: GASolution> GAPopulation<T>
 
     pub fn worst_by_raw_score(&self) -> &T
     {
-        self.individual(self.size()-1, GAPopulationSortBasis::Scaled)
+        self.individual(self.size()-1, GAPopulationSortBasis::Raw)
     }
 
-    pub fn best_by_scaled_score(&self) -> &T
+    pub fn best_by_fitness_score(&self) -> &T
     {
-        self.individual(0, GAPopulationSortBasis::Scaled)
+        self.individual(0, GAPopulationSortBasis::Fitness)
     }
 
-    pub fn worst_by_scaled_score(&self) -> &T
+    pub fn worst_by_fitness_score(&self) -> &T
     {
-        self.individual(self.size()-1, GAPopulationSortBasis::Scaled)
+        self.individual(self.size()-1, GAPopulationSortBasis::Fitness)
     }
 
     pub fn individual(&self, i : usize, sort_basis : GAPopulationSortBasis) -> &T
@@ -137,14 +137,14 @@ impl<T: GASolution> GAPopulation<T>
         {
             GAPopulationSortBasis::Raw
             => { &self.population[self.population_order_raw[i]] },
-            GAPopulationSortBasis::Scaled
-            => { &self.population[self.population_order_scaled[i]] },
+            GAPopulationSortBasis::Fitness
+            => { &self.population[self.population_order_fitness[i]] },
         }
     }
 
     pub fn sort(&mut self)
     {
-        self.sort_int(false, GAPopulationSortBasis::Scaled);
+        self.sort_int(false, GAPopulationSortBasis::Fitness);
         self.sort_int(false, GAPopulationSortBasis::Raw);
     }
 
@@ -162,15 +162,15 @@ impl<T: GASolution> GAPopulation<T>
                         GAPopulationSortOrder::LowIsBest =>
                         {
                             ordered.sort_by(|s1: &usize, s2: &usize|
-                                            self.population[*s1].score()
-                                                .partial_cmp(&self.population[*s2].score()).unwrap_or(Ordering::Equal));
+                                            self.population[*s1].raw()
+                                                .partial_cmp(&self.population[*s2].raw()).unwrap_or(Ordering::Equal));
 
                         },
                         GAPopulationSortOrder::HighIsBest =>
                         {
                             ordered.sort_by(|s1: &usize, s2: &usize|
-                                            self.population[*s2].score()
-                                                .partial_cmp(&self.population[*s1].score()).unwrap_or(Ordering::Equal));
+                                            self.population[*s2].raw()
+                                                .partial_cmp(&self.population[*s1].raw()).unwrap_or(Ordering::Equal));
                                                                   
                         },
                     };
@@ -178,8 +178,8 @@ impl<T: GASolution> GAPopulation<T>
                     self.is_raw_sorted = true;
                 },
 
-            GAPopulationSortBasis::Scaled
-            =>  if (!self.is_scaled_sorted) || force_sort
+            GAPopulationSortBasis::Fitness
+            =>  if (!self.is_fitness_sorted) || force_sort
                 {
                     match self.sort_order
                     {
@@ -197,8 +197,8 @@ impl<T: GASolution> GAPopulation<T>
                                                 .partial_cmp(&self.population[*s1].fitness()).unwrap_or(Ordering::Equal));
                         }
                     };
-                    self.population_order_scaled = ordered;
-                    self.is_scaled_sorted = true;
+                    self.population_order_fitness = ordered;
+                    self.is_fitness_sorted = true;
                 },
         };
     }
@@ -214,13 +214,13 @@ impl<T: GASolution> GAPopulation<T>
     }
 }
 
-pub struct GAPopulationRawIterator<'a, T: 'a + GASolution>
+pub struct GAPopulationRawIterator<'a, T: 'a + GAIndividual>
 {
     population: &'a GAPopulation<T>,
     next: usize
 }
 
-impl<'a, T: GASolution> Iterator for GAPopulationRawIterator<'a, T>
+impl<'a, T: GAIndividual> Iterator for GAPopulationRawIterator<'a, T>
 {
     type Item = &'a T;
 
@@ -238,13 +238,13 @@ impl<'a, T: GASolution> Iterator for GAPopulationRawIterator<'a, T>
     }
 }
 
-pub struct GAPopulationFitnessIterator<'a, T: 'a + GASolution>
+pub struct GAPopulationFitnessIterator<'a, T: 'a + GAIndividual>
 {
     population: &'a GAPopulation<T>,
     next: usize
 }
 
-impl<'a, T: GASolution> Iterator for GAPopulationFitnessIterator<'a, T>
+impl<'a, T: GAIndividual> Iterator for GAPopulationFitnessIterator<'a, T>
 {
     type Item = &'a T;
 
@@ -257,7 +257,7 @@ impl<'a, T: GASolution> Iterator for GAPopulationFitnessIterator<'a, T>
         else
         {
             self.next = self.next + 1;
-            Some(self.population.individual(self.next - 1, GAPopulationSortBasis::Scaled)) 
+            Some(self.population.individual(self.next - 1, GAPopulationSortBasis::Fitness)) 
         }
     }
 
@@ -281,14 +281,14 @@ mod test
         let i_f = 1.0 / f;
         let i_f_m = 1.0 / f_m;
 
-        let mut population = GAPopulation::new(vec![GATestSolution::new(f), GATestSolution::new(f_m)], GAPopulationSortOrder::HighIsBest);
+        let mut population = GAPopulation::new(vec![GATestIndividual::new(f), GATestIndividual::new(f_m)], GAPopulationSortOrder::HighIsBest);
         population.sort();
 
-        //GATestSolution's Fitness is the inverse of the Score (F = 1/S)
-        assert_eq!(population.individual(0, GAPopulationSortBasis::Raw).score(), f);
-        assert_eq!(population.individual(1, GAPopulationSortBasis::Raw).score(), f_m);
-        assert_eq!(population.individual(0, GAPopulationSortBasis::Scaled).fitness(), i_f_m);
-        assert_eq!(population.individual(1, GAPopulationSortBasis::Scaled).fitness(), i_f);
+        //GATestIndividual's Fitness is the inverse of the Score (F = 1/S)
+        assert_eq!(population.individual(0, GAPopulationSortBasis::Raw).raw(), f);
+        assert_eq!(population.individual(1, GAPopulationSortBasis::Raw).raw(), f_m);
+        assert_eq!(population.individual(0, GAPopulationSortBasis::Fitness).fitness(), i_f_m);
+        assert_eq!(population.individual(1, GAPopulationSortBasis::Fitness).fitness(), i_f);
         ga_test_teardown();
     }
 
@@ -300,16 +300,16 @@ mod test
 
         let mut expected_seq: Vec<f32> = (1..10).map(|rs| rs as f32).collect();
         {
-            let mut inds: Vec<GATestSolution> = Vec::new();
+            let mut inds: Vec<GATestIndividual> = Vec::new();
             for rs in 1..10
             {
-                inds.push(GATestSolution::new(rs as f32)); 
+                inds.push(GATestIndividual::new(rs as f32)); 
             }
             let mut pop = GAPopulation::new(inds, GAPopulationSortOrder::LowIsBest);
             pop.sort();
 
             let it = pop.raw_score_iterator();
-            let actual_seq: Vec<f32> = it.map(|ind| { ind.score() }).collect();
+            let actual_seq: Vec<f32> = it.map(|ind| { ind.raw() }).collect();
             assert_eq!(expected_seq, actual_seq);
         }
 
@@ -317,16 +317,16 @@ mod test
 
         expected_seq.reverse();
         {
-            let mut inds: Vec<GATestSolution> = Vec::new();
+            let mut inds: Vec<GATestIndividual> = Vec::new();
             for rs in 1..10
             {
-                inds.push(GATestSolution::new(rs as f32)); 
+                inds.push(GATestIndividual::new(rs as f32)); 
             }
             let mut pop = GAPopulation::new(inds, GAPopulationSortOrder::HighIsBest);
             pop.sort();
 
             let it = pop.raw_score_iterator();
-            let actual_seq: Vec<f32> = it.map(|ind| { ind.score() }).collect();
+            let actual_seq: Vec<f32> = it.map(|ind| { ind.raw() }).collect();
             assert_eq!(expected_seq, actual_seq);
         }
         ga_test_teardown()
@@ -340,10 +340,10 @@ mod test
 
         let mut expected_seq: Vec<f32> = (1..10).map(|rs| 1.0/(rs as f32)).collect();
         {
-            let mut inds: Vec<GATestSolution> = Vec::new();
+            let mut inds: Vec<GATestIndividual> = Vec::new();
             for rs in 1..10
             {
-                inds.push(GATestSolution::new(rs as f32)); 
+                inds.push(GATestIndividual::new(rs as f32)); 
             }
             let mut pop = GAPopulation::new(inds, GAPopulationSortOrder::HighIsBest);
             pop.sort();
@@ -357,10 +357,10 @@ mod test
 
         expected_seq.reverse();
         {
-            let mut inds: Vec<GATestSolution> = Vec::new();
+            let mut inds: Vec<GATestIndividual> = Vec::new();
             for rs in 1..10
             {
-                inds.push(GATestSolution::new(rs as f32)); 
+                inds.push(GATestIndividual::new(rs as f32)); 
             }
             let mut pop = GAPopulation::new(inds, GAPopulationSortOrder::LowIsBest);
             pop.sort();

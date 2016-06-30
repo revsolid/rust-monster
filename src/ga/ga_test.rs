@@ -42,33 +42,32 @@ fn ga_test_setup_internal(test_name: &str)
 pub fn ga_test_teardown(){}
 
 
-/// GATestSolution
-/// Implements the GASolution Trait with only no-ops
+/// GATestIndividual
+/// Implements the GAIndividual Trait with only no-ops
 #[derive(Clone)]
-pub struct GATestSolution
+pub struct GATestIndividual
 {
-    score: f32,
+    raw: f32,
     fitness: f32
 }
-impl GATestSolution
+impl GATestIndividual
 {
-    pub fn new(rs:f32) -> GATestSolution
+    pub fn new(rs:f32) -> GATestIndividual
     {
-        GATestSolution{ score: rs, fitness: 1.0/rs }
+        GATestIndividual{ raw: rs, fitness: 1.0/rs }
     }
 }
-impl GASolution for GATestSolution 
+impl GAIndividual for GATestIndividual 
 {
-   // fn clone(&self) -> Self { GATestSolution::new(self.score) }
     fn evaluate(&mut self) -> f32 { self.fitness }
-    fn crossover(&self, _: &GATestSolution) -> Box<GATestSolution>
+    fn crossover(&self, _: &GATestIndividual) -> Box<GATestIndividual>
     { 
-        Box::new(GATestSolution::new(self.fitness))
+        Box::new(GATestIndividual::new(self.fitness))
     }
     fn mutate(&mut self, _: f32) {}
     fn fitness(&self) -> f32 { self.fitness }
     fn set_fitness(&mut self, fitness:f32) { self.fitness = fitness; }
-    fn score(&self) -> f32 { self.score}
+    fn raw(&self) -> f32 { self.raw }
 }
 
 pub struct GATestFactory
@@ -82,10 +81,10 @@ impl GATestFactory
         GATestFactory {starting_score: starting_score}
     }
 }
-impl GAFactory<GATestSolution> for GATestFactory
+impl GAFactory<GATestIndividual> for GATestFactory
 {
-    fn initial_population(&mut self) -> GAPopulation<GATestSolution>
+    fn initial_population(&mut self) -> GAPopulation<GATestIndividual>
     {
-        GAPopulation::new(vec![GATestSolution::new(self.starting_score)], GAPopulationSortOrder::HighIsBest)
+        GAPopulation::new(vec![GATestIndividual::new(self.starting_score)], GAPopulationSortOrder::HighIsBest)
     }
 }
