@@ -6,7 +6,7 @@
 //! Defines the core traits to work with rust-monster
 
 
-use super::ga_population::{GAPopulation, GAPopulationSortOrder};
+use ::ga::ga_population::{GAPopulation, GAPopulationSortOrder};
 
 /// Bit Flags for Genetic Algorithm Configuration 
 /// 
@@ -23,27 +23,11 @@ impl Default for GAFlags
     fn default() -> GAFlags { GAFlags {bits : 0} }
 }
 
-
-/// Genetic Algorithm Configuration
-///
-/// 
-pub trait GAConfig
-{
-    fn flags(&self) -> GAFlags;
-    fn max_generations(&self) -> i32;
-    fn probability_crossover(&self) -> f32;
-    fn probability_mutation(&self) -> f32;
-}
-
-
 /// Genetic Algorithm Solution
 pub trait GASolution
 {
-    //Static
-    fn new(f:f32) -> Self;
-
     // Instance
-    fn crossover(&self, other : &Self) -> Self;
+    fn crossover(&self, other : &Self) -> Box<Self>;
     fn mutate(&mut self, pMutation : f32);
     fn evaluate(&mut self) -> f32;
     // Scaled fitness score
@@ -87,8 +71,6 @@ pub trait GeneticAlgorithm<T: GASolution>
     }
 
     // IMPLEMENTATION SPECIFIC
-    fn config(&mut self) -> &GAConfig;
-
     fn population(&mut self) -> &mut GAPopulation<T>;
 
     fn initialize_internal(&mut self) {}

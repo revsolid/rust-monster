@@ -4,7 +4,7 @@
 
 //! Genetic Algorithm Population
 
-use super::ga_core::GASolution;
+use ::ga::ga_core::GASolution;
 
 use std::cmp::Ordering;
 use std::iter::FromIterator;
@@ -269,8 +269,8 @@ impl<'a, T: GASolution> Iterator for GAPopulationFitnessIterator<'a, T>
 mod test
 {
     use super::*;
-    use super::super::ga_test::*;
-    use super::super::ga_core::*;
+    use ::ga::ga_test::*;
+    use ::ga::ga_core::*;
 
     #[test]
     fn test_sort_population()
@@ -295,6 +295,7 @@ mod test
     #[test]
     fn test_population_raw_iterator()
     {
+        ga_test_setup("ga_population::test_population_raw_iterator");
         // Iteration of a LowIsBest population yields a sequence of non-decreasing raw scores.
 
         let mut expected_seq: Vec<f32> = (1..10).map(|rs| rs as f32).collect();
@@ -328,11 +329,13 @@ mod test
             let actual_seq: Vec<f32> = it.map(|ind| { ind.score() }).collect();
             assert_eq!(expected_seq, actual_seq);
         }
+        ga_test_teardown()
     }
 
     #[test]
     fn test_population_fitness_iterator()
     {
+        ga_test_setup("ga_population::test_population_fitness_iterator");
         // Iteration of a HighIsBest population yields a sequence of non-decreasing fitness scores (when fitness = 1/raw).
 
         let mut expected_seq: Vec<f32> = (1..10).map(|rs| 1.0/(rs as f32)).collect();
@@ -366,6 +369,6 @@ mod test
             let actual_seq: Vec<f32> = it.map(|ind| { ind.fitness() }).collect();
             assert_eq!(expected_seq, actual_seq);
         }
-
+        ga_test_teardown();
     }
 }

@@ -5,8 +5,8 @@
 //! GA Test Utilities
 //! Reusable classes for testing
 
-use super::ga_core::*;
-use super::ga_population::*;
+use ::ga::ga_core::*;
+use ::ga::ga_population::*;
 
 #[cfg(test)]
 extern crate env_logger;
@@ -50,15 +50,21 @@ pub struct GATestSolution
     score: f32,
     fitness: f32
 }
-impl GASolution for GATestSolution 
+impl GATestSolution
 {
-    fn new(rs:f32) -> GATestSolution
+    pub fn new(rs:f32) -> GATestSolution
     {
         GATestSolution{ score: rs, fitness: 1.0/rs }
     }
-
+}
+impl GASolution for GATestSolution 
+{
+   // fn clone(&self) -> Self { GATestSolution::new(self.score) }
     fn evaluate(&mut self) -> f32 { self.fitness }
-    fn crossover(&self, _: &Self) -> Self { GATestSolution::new(self.fitness) }
+    fn crossover(&self, _: &GATestSolution) -> Box<GATestSolution>
+    { 
+        Box::new(GATestSolution::new(self.fitness))
+    }
     fn mutate(&mut self, _: f32) {}
     fn fitness(&self) -> f32 { self.fitness }
     fn set_fitness(&mut self, fitness:f32) { self.fitness = fitness; }

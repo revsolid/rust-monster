@@ -3,7 +3,7 @@ name = "rust-monster"
 version = "0.1.0"
 authors = ["El Jacko <eljacko@revolutionsolid.com>", "Ricardo Sisnett <sysnet@revolutionsolid.com>"]
 
-description = "GALib Rust port"
+description = "GALib rust port"
 license = "MIT"
 homepage = "https://www.github.com/mrjackinc/rust-monster"
 
