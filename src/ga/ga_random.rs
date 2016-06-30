@@ -148,7 +148,7 @@ impl fmt::Debug for GARandomCtx
 mod test
 {
     use super::{GASeed, GARandomCtx};
-    use super::super::ga_test::{ga_test_setup, ga_test_teardown};
+    use ::ga::ga_test::{ga_test_setup, ga_test_teardown};
 
     #[test]
     fn same_seed()

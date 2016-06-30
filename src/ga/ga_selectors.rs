@@ -25,9 +25,9 @@
 //! `GATournamentSelector`
 //!
 //! # Examples
-use super::ga_core::GAIndividual;
-use super::ga_population::{GAPopulation, GAPopulationSortBasis, GAPopulationSortOrder};
-use super::ga_random::{GARandomCtx};
+use ::ga::ga_core::GAIndividual;
+use ::ga::ga_population::{GAPopulation, GAPopulationSortBasis, GAPopulationSortOrder};
+use ::ga::ga_random::{GARandomCtx};
 use std::cmp;
 
 /// Selector trait.
@@ -405,10 +405,11 @@ impl<T: GAIndividual> GASelector<T> for GATournamentSelector
 #[cfg(test)]
 mod test
 {
-    use super::super::ga_core::*;
-    use super::super::ga_population::*;
-    use super::super::ga_random::*;
-    use super::super::ga_test::*;
+    use ::ga::ga_core::*;
+    use ::ga::ga_population::*;
+    use ::ga::ga_random::*;
+    use ::ga::ga_test::*;
+
     use super::*;
 
     #[test]

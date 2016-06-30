@@ -6,8 +6,8 @@
 //!
 //! Scales the raw score of a population's individuals.
 
-use super::ga_core::GAIndividual;
-use super::ga_population::GAPopulation;
+use ::ga::ga_core::GAIndividual;
+use ::ga::ga_population::GAPopulation;
 
 /// Scaling Scheme Trait
 /// 

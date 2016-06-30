@@ -5,8 +5,8 @@
 //! GA Test Utilities
 //! Reusable classes for testing
 
-use super::ga_core::*;
-use super::ga_population::*;
+use ::ga::ga_core::*;
+use ::ga::ga_population::*;
 
 #[cfg(test)]
 extern crate env_logger;
@@ -50,15 +50,20 @@ pub struct GATestIndividual
     raw: f32,
     fitness: f32
 }
-impl GAIndividual for GATestIndividual 
+impl GATestIndividual
 {
-    fn new(rs:f32) -> GATestIndividual
+    pub fn new(rs:f32) -> GATestIndividual
     {
         GATestIndividual{ raw: rs, fitness: 1.0/rs }
     }
-
+}
+impl GAIndividual for GATestIndividual 
+{
     fn evaluate(&mut self) -> f32 { self.fitness }
-    fn crossover(&self, _: &Self) -> Self { GATestIndividual::new(self.fitness) }
+    fn crossover(&self, _: &GATestIndividual) -> Box<GATestIndividual>
+    { 
+        Box::new(GATestIndividual::new(self.fitness))
+    }
     fn mutate(&mut self, _: f32) {}
     fn fitness(&self) -> f32 { self.fitness }
     fn set_fitness(&mut self, fitness:f32) { self.fitness = fitness; }
