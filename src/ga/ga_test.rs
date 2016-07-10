@@ -59,15 +59,15 @@ impl GATestIndividual
 }
 impl GAIndividual for GATestIndividual 
 {
-    fn evaluate(&mut self) -> f32 { self.fitness }
     fn crossover(&self, _: &GATestIndividual) -> Box<GATestIndividual>
     { 
-        Box::new(GATestIndividual::new(self.fitness))
+        Box::new(GATestIndividual::new(self.raw))
     }
     fn mutate(&mut self, _: f32) {}
     fn fitness(&self) -> f32 { self.fitness }
-    fn set_fitness(&mut self, fitness:f32) { self.fitness = fitness; }
+    fn set_fitness(&mut self, fitness: f32) { self.fitness = fitness; }
     fn raw(&self) -> f32 { self.raw }
+    fn set_raw(&mut self, raw: f32) { self.raw = raw; }
 }
 
 pub struct GATestFactory

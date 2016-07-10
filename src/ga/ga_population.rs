@@ -45,6 +45,8 @@ pub struct GAPopulation<T: GAIndividual>
 
     // We keep 2 lists of indexes to the population vector.
     // One sorted by raw score and one by fitness score.
+
+    evaluation_function: fn(&mut Vec<T>),
 }
 impl<T: GAIndividual> GAPopulation<T>
 {
@@ -58,7 +60,31 @@ impl<T: GAIndividual> GAPopulation<T>
                       population_order_raw: vec![],
                       is_raw_sorted: false,
                       population_order_fitness: vec![],
-                      is_fitness_sorted: false
+                      is_fitness_sorted: false,
+                      evaluation_function: {
+                          fn noop_evaluation<T>(p: &mut Vec<T>)
+                          {
+                              return
+                          };
+                          noop_evaluation
+                      }
+                  };
+
+        gap
+    }
+
+    pub fn new_with_eval_function(p: Vec<T>, order: GAPopulationSortOrder,
+                                  eval_function: fn(&mut Vec<T>)) -> GAPopulation<T>
+    {
+        let gap = GAPopulation 
+                  {
+                      population: p,
+                      sort_order: order,
+                      population_order_raw: vec![],
+                      is_raw_sorted: false,
+                      population_order_fitness: vec![],
+                      is_fitness_sorted: false,
+                      evaluation_function: eval_function
                   };
 
         gap
@@ -71,10 +97,8 @@ impl<T: GAIndividual> GAPopulation<T>
 
     pub fn evaluate(&mut self)
     {
-        for ref mut ind in &mut self.population
-        {
-            ind.evaluate();
-        }
+        let f = self.evaluation_function;
+        f(&mut self.population);
     }
 
     pub fn size(&self) -> usize
@@ -211,6 +235,24 @@ impl<T: GAIndividual> GAPopulation<T>
     pub fn fitness_score_iterator<'a>(&'a self) -> GAPopulationFitnessIterator<'a, T>
     {
         GAPopulationFitnessIterator { population: &self, next: 0 }
+    }
+
+    pub fn swap(&mut self, new_pop: Vec<T>)
+    {
+        self.population = new_pop;
+        self.is_raw_sorted = false;
+        self.is_fitness_sorted = false;
+    }
+
+    // TODO: This needs a better name or more parameters
+    // Currently it only swaps out the worst-fitness individual
+    // and puts the new individual into the population
+    pub fn swap_individual(&mut self, new_individual: T)
+    {
+        let l = self.population.len();
+        self.population[self.population_order_fitness[l-1]] = new_individual;
+        self.is_raw_sorted = false;
+        self.is_fitness_sorted = false;
     }
 }
 
@@ -369,6 +411,40 @@ mod test
             let actual_seq: Vec<f32> = it.map(|ind| { ind.fitness() }).collect();
             assert_eq!(expected_seq, actual_seq);
         }
+        ga_test_teardown();
+    }
+
+    #[test]
+    fn test_population_with_custom_eval_func()
+    {
+        ga_test_setup("test_population_with_custom_eval_func");
+        let mut expected_seq: Vec<f32> = (1..10).map(|rs| (rs*10) as f32).collect();
+        {
+            let mut inds: Vec<GATestIndividual> = Vec::new();
+            for rs in 1..10
+            {
+                inds.push(GATestIndividual::new(rs as f32)); 
+            }
+            let mut pop = GAPopulation::new_with_eval_function(inds, GAPopulationSortOrder::LowIsBest,
+                                                               {
+                                                                   fn f(p: &mut Vec<GATestIndividual>)
+                                                                   {
+                                                                       for ref mut ind in p
+                                                                        {
+                                                                            let r = ind.raw();
+                                                                            ind.set_raw(10.0*r);
+                                                                        }
+                                                                   }
+                                                                   f
+                                                               });
+            pop.evaluate();
+            pop.sort();
+
+            let it = pop.raw_score_iterator();
+            let actual_seq: Vec<f32> = it.map(|ind| { ind.raw() }).collect();
+            assert_eq!(expected_seq, actual_seq);
+        }
+
         ga_test_teardown();
     }
 }

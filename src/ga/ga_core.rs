@@ -27,14 +27,14 @@ impl Default for GAFlags
 pub trait GAIndividual
 {
     // Instance
-    fn crossover(&self, other : &Self) -> Box<Self>;
-    fn mutate(&mut self, pMutation : f32);
-    fn evaluate(&mut self) -> f32;
+    fn crossover(&self, other: &Self) -> Box<Self>;
+    fn mutate(&mut self, pMutation: f32);
     // Fitness score
     fn fitness(&self) -> f32;
-    fn set_fitness(&mut self, f : f32);
+    fn set_fitness(&mut self, f: f32);
     // Raw score
     fn raw(&self) -> f32;
+    fn set_raw(&mut self, r: f32);
 }
 
 

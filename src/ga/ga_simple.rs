@@ -98,18 +98,20 @@ impl<T: GAIndividual + Clone> GeneticAlgorithm<T> for SimpleGeneticAlgorithm <T>
             new_individuals.push(new_ind);
         }
 
+        let best_old_individual = self.population.best().clone();
+
         // Evaluate the new population
-        // self.population.swap(new_individuals);
+        self.population.swap(new_individuals);
         self.population.evaluate();
         self.population.sort();
 
-        let best_old_individual = self.population.best().clone();
 
         if self.config.elitism
         {
             if best_old_individual.fitness() > self.population.worst().fitness()
             {
-                // population.swap_individual(best_old_individual, ...)
+                self.population.swap_individual(best_old_individual);
+                self.population.sort(); // I don't love the double sorting :(
             }
         }
 
