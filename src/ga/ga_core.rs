@@ -45,6 +45,9 @@ pub trait GAFactory<T: GAIndividual>
     {
         GAPopulation::new(vec![], GAPopulationSortOrder::HighIsBest)
     }
+
+    // Create a population with n individuals with random scores.
+    fn random_population(&mut self, n: usize, sort_order: GAPopulationSortOrder) -> GAPopulation<T>;
 }
 
 
