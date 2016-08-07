@@ -7,6 +7,7 @@
 
 use ::ga::ga_core::*;
 use ::ga::ga_population::*;
+use ::ga::ga_random::*;
 
 #[cfg(test)]
 extern crate env_logger;
@@ -44,7 +45,7 @@ pub fn ga_test_teardown(){}
 
 /// GATestIndividual
 /// Implements the GAIndividual Trait with only no-ops
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct GATestIndividual
 {
     raw: f32,
@@ -86,5 +87,19 @@ impl GAFactory<GATestIndividual> for GATestFactory
     fn initial_population(&mut self) -> GAPopulation<GATestIndividual>
     {
         GAPopulation::new(vec![GATestIndividual::new(self.starting_score)], GAPopulationSortOrder::HighIsBest)
+    }
+
+    fn random_population(&mut self, n: usize, sort_order: GAPopulationSortOrder) -> GAPopulation<GATestIndividual>
+    {
+        let mut rng_ctx = GARandomCtx::from_seed([1,2,3,4], String::from("random_population"));
+
+        let mut inds: Vec<GATestIndividual> = Vec::new();
+
+        for _ in 0..n
+        {
+            inds.push(GATestIndividual::new(rng_ctx.gen::<f32>()));
+        }
+
+        GAPopulation::new(inds, sort_order)
     }
 }

@@ -19,7 +19,7 @@ pub enum GAPopulationSortBasis
 
 // The 'Copy' trait requires the 'Clone' trait.
 // 'Copy' removes the 'move' semantics from an assignment or a function return of value.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum GAPopulationSortOrder
 {
     LowIsBest,
@@ -214,6 +214,43 @@ impl<T: GAIndividual> GAPopulation<T>
     }
 }
 
+impl<T: GAIndividual + Clone> Clone for GAPopulation<T>
+{
+    fn clone(&self) -> Self
+    {
+        GAPopulation
+        {
+            population: self.population.clone(),
+            sort_order: self.sort_order,
+            population_order_raw: self.population_order_raw.clone(),
+            is_raw_sorted: self.is_raw_sorted,
+            population_order_fitness: self.population_order_fitness.clone(),
+            is_fitness_sorted: self.is_fitness_sorted
+        }
+    }
+}
+
+impl<T: GAIndividual + PartialEq> PartialEq for GAPopulation<T>
+{
+    // Only meant for testing clone(). We may consider relaxing the
+    // condition for general use (i.e. compare only population and
+    // sort_order, and not the rest, which are the result of invoking
+    // a method with deterministic outcome).
+    fn eq(&self, other: &GAPopulation<T>) -> bool
+    {
+        // Fail fast, by doing lightweight comparisons first.
+        //
+        // Vector comparisons actually compare element by element.
+        // That's why T has to implement PartialEq.
+        self.sort_order == other.sort_order 
+        && self.is_raw_sorted == other.is_raw_sorted
+        && self.is_fitness_sorted == other.is_fitness_sorted
+        && self.population == other.population 
+        && self.population_order_raw == other.population_order_raw
+        && self.population_order_fitness == other.population_order_fitness
+    }
+}
+
 pub struct GAPopulationRawIterator<'a, T: 'a + GAIndividual>
 {
     population: &'a GAPopulation<T>,
@@ -293,9 +330,46 @@ mod test
     }
 
     #[test]
+    fn test_clone_population()
+    {
+        ga_test_setup("ga_population::test_clone_population");
+
+        // The clone of a population should be equal to the original.
+
+        let mut fact = GATestFactory::new(0.0);
+
+        {
+            let mut pop = fact.random_population(10, GAPopulationSortOrder::HighIsBest);
+
+            // Upon creation.
+            assert_eq!(pop == pop.clone(), true);
+
+            pop.sort();
+
+            // After updating its state.
+            assert_eq!(pop == pop.clone(), true);
+        }
+
+        {
+            let mut pop = fact.random_population(10, GAPopulationSortOrder::LowIsBest);
+
+            // Upon creation.
+            assert_eq!(pop == pop.clone(), true);
+
+            pop.sort();
+
+            // After updating its state.
+            assert_eq!(pop == pop.clone(), true);
+        }
+
+        ga_test_teardown();
+    }
+
+    #[test]
     fn test_population_raw_iterator()
     {
         ga_test_setup("ga_population::test_population_raw_iterator");
+
         // Iteration of a LowIsBest population yields a sequence of non-decreasing raw scores.
 
         let mut expected_seq: Vec<f32> = (1..10).map(|rs| rs as f32).collect();
@@ -336,6 +410,7 @@ mod test
     fn test_population_fitness_iterator()
     {
         ga_test_setup("ga_population::test_population_fitness_iterator");
+
         // Iteration of a HighIsBest population yields a sequence of non-decreasing fitness scores (when fitness = 1/raw).
 
         let mut expected_seq: Vec<f32> = (1..10).map(|rs| 1.0/(rs as f32)).collect();
