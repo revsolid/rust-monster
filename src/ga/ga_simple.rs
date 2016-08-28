@@ -101,7 +101,9 @@ impl<T: GAIndividual + Clone> GeneticAlgorithm<T> for SimpleGeneticAlgorithm <T>
         let best_old_individual = self.population.best().clone();
 
         // Evaluate the new population
-        self.population.swap(new_individuals);
+        // TODO: Archive the old population
+        let order = self.population.order();
+        self.population = GAPopulation::new(new_individuals, order);
         self.population.evaluate();
         self.population.sort();
 
