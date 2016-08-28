@@ -260,7 +260,15 @@ impl<T: GAIndividual + Clone> Clone for GAPopulation<T>
             population_order_raw: self.population_order_raw.clone(),
             is_raw_sorted: self.is_raw_sorted,
             population_order_fitness: self.population_order_fitness.clone(),
-            is_fitness_sorted: self.is_fitness_sorted
+            is_fitness_sorted: self.is_fitness_sorted,
+            evaluation_function: {
+                fn noop_evaluation<T>(_: &mut Vec<T>)
+                {
+                    return
+                };
+                noop_evaluation
+            }
+
         }
     }
 }
