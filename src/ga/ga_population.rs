@@ -62,7 +62,7 @@ impl<T: GAIndividual> GAPopulation<T>
                       population_order_fitness: vec![],
                       is_fitness_sorted: false,
                       evaluation_function: {
-                          fn noop_evaluation<T>(p: &mut Vec<T>)
+                          fn noop_evaluation<T>(_: &mut Vec<T>)
                           {
                               return
                           };
@@ -235,13 +235,6 @@ impl<T: GAIndividual> GAPopulation<T>
     pub fn fitness_score_iterator<'a>(&'a self) -> GAPopulationFitnessIterator<'a, T>
     {
         GAPopulationFitnessIterator { population: &self, next: 0 }
-    }
-
-    pub fn swap(&mut self, new_pop: Vec<T>)
-    {
-        self.population = new_pop;
-        self.is_raw_sorted = false;
-        self.is_fitness_sorted = false;
     }
 
     // TODO: This needs a better name or more parameters
@@ -493,7 +486,7 @@ mod test
     fn test_population_with_custom_eval_func()
     {
         ga_test_setup("test_population_with_custom_eval_func");
-        let mut expected_seq: Vec<f32> = (1..10).map(|rs| (rs*10) as f32).collect();
+        let expected_seq: Vec<f32> = (1..10).map(|rs| (rs*10) as f32).collect();
         {
             let mut inds: Vec<GATestIndividual> = Vec::new();
             for rs in 1..10
