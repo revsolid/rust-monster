@@ -92,6 +92,17 @@ impl GARandomCtx
     pub fn next_f32(&mut self) -> f32 { self.gen::<f32>() }
     pub fn next_f64(&mut self) -> f64 { self.gen::<f64>() }
 
+    pub fn shuffle<T>(&mut self, values: &mut [T]) where Self: Sized, T: Copy
+    {
+        for i in 0..values.len()-2
+        {
+            let j = self.gen_range(i, values.len());
+            let t = values[i];
+            values[i] = values[j];
+            values[j] = t;
+        }
+    }
+
 // Random Values - GARandomCtx functions
     pub fn test_value<T: PartialOrd + Rand>(&mut self, value: T) -> bool 
     {
