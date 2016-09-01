@@ -4,10 +4,11 @@
 extern crate rust_monster;
 #[macro_use]
 extern crate log;
-extern crate env_logger;
 #[cfg(test)]
 mod tests
 {
+
+    extern crate env_logger;
     // Test with the classic TSP problem
     use rust_monster::ga::ga_test::*;
     use rust_monster::ga::ga_random::*;
@@ -199,7 +200,7 @@ mod tests
     #[test]
     fn tsp_integration_test()
     {
-        ga_test_setup("tsp_integration_test");
+        let _ = env_logger::init();
         let tsp_size = 30;
         let mut ind_factory = TSPIndividualFactory::new(tsp_size);
         let mut evaluation_ctx = TSPEvaluationCtx::new(tsp_size);
@@ -230,6 +231,5 @@ mod tests
                    sga.population().individual(0, GAPopulationSortBasis::Raw).raw(),
                    sga.population().individual(0, GAPopulationSortBasis::Raw).inxes);
         }
-        ga_test_teardown();
     }
 }
