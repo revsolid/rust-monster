@@ -7,6 +7,9 @@
 
 
 use ::ga::ga_population::{GAPopulation, GAPopulationSortOrder};
+use ::ga::ga_random::GARandomCtx;
+
+use std::any::Any;
 
 /// Bit Flags for Genetic Algorithm Configuration 
 /// 
@@ -27,27 +30,24 @@ impl Default for GAFlags
 pub trait GAIndividual
 {
     // Instance
-    fn crossover(&self, other : &Self) -> Box<Self>;
-    fn mutate(&mut self, pMutation : f32);
-    fn evaluate(&mut self) -> f32;
+    fn crossover(&self, other: &Self, rng_ctx: &mut GARandomCtx) -> Box<Self>;
+    fn mutate(&mut self, pMutation: f32, rng_ctx: &mut GARandomCtx);
+    fn evaluate(&mut self, evaluation_ctx: &mut Any);
     // Fitness score
     fn fitness(&self) -> f32;
-    fn set_fitness(&mut self, f : f32);
+    fn set_fitness(&mut self, f: f32);
     // Raw score
     fn raw(&self) -> f32;
+    fn set_raw(&mut self, r: f32);
 }
 
 
 /// Genetic Algorithm Individual Factory
 pub trait GAFactory<T: GAIndividual>
 {
-    fn initial_population(&mut self) -> GAPopulation<T> 
-    {
-        GAPopulation::new(vec![], GAPopulationSortOrder::HighIsBest)
-    }
-
-    // Create a population with n individuals with random scores.
-    fn random_population(&mut self, n: usize, sort_order: GAPopulationSortOrder) -> GAPopulation<T>;
+    // Create a population with n randomly initialized individuals
+    fn random_population(&mut self, n: usize, sort_order: GAPopulationSortOrder,
+                         rng_ctx: &mut GARandomCtx) -> GAPopulation<T>;
 }
 
 

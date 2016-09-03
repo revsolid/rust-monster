@@ -5,9 +5,11 @@
 //! Genetic Algorithm Population
 
 use ::ga::ga_core::GAIndividual;
+use ::ga::ga_random::GARandomCtx;
 
 use std::cmp::Ordering;
 use std::iter::FromIterator;
+use std::any::Any;
 
 // Better name than 'Basis'?
 #[derive(Clone, Copy)]
@@ -24,6 +26,11 @@ pub enum GAPopulationSortOrder
 {
     LowIsBest,
     HighIsBest,
+}
+
+impl Default for GAPopulationSortOrder
+{
+    fn default() -> GAPopulationSortOrder { GAPopulationSortOrder::HighIsBest }
 }
 
 /// Genetic Algorithm Population
@@ -58,7 +65,7 @@ impl<T: GAIndividual> GAPopulation<T>
                       population_order_raw: vec![],
                       is_raw_sorted: false,
                       population_order_fitness: vec![],
-                      is_fitness_sorted: false
+                      is_fitness_sorted: false,
                   };
 
         gap
@@ -69,11 +76,11 @@ impl<T: GAIndividual> GAPopulation<T>
         return &mut self.population
     }
 
-    pub fn evaluate(&mut self)
+    pub fn evaluate(&mut self, evaluation_ctx: &mut Any)
     {
         for ref mut ind in &mut self.population
         {
-            ind.evaluate();
+            ind.evaluate(evaluation_ctx);
         }
     }
 
@@ -212,6 +219,33 @@ impl<T: GAIndividual> GAPopulation<T>
     {
         GAPopulationFitnessIterator { population: &self, next: 0 }
     }
+
+    pub fn swap_individual(&mut self, new_individual: T)
+    {
+        let mut should_swap = false;
+
+        {
+            let worst = self.worst();
+            match self.sort_order
+            {
+                GAPopulationSortOrder::LowIsBest =>
+                {
+                    should_swap = new_individual.fitness() < worst.fitness();
+                },
+                GAPopulationSortOrder::HighIsBest =>
+                {
+                    should_swap = new_individual.fitness() > worst.fitness();
+                }
+            }
+        }
+        let l = self.population.len();
+        if (should_swap)
+        {
+            self.population[self.population_order_fitness[l-1]] = new_individual;
+            self.is_raw_sorted = false;
+            self.is_fitness_sorted = false;
+        }
+    }
 }
 
 impl<T: GAIndividual + Clone> Clone for GAPopulation<T>
@@ -225,7 +259,7 @@ impl<T: GAIndividual + Clone> Clone for GAPopulation<T>
             population_order_raw: self.population_order_raw.clone(),
             is_raw_sorted: self.is_raw_sorted,
             population_order_fitness: self.population_order_fitness.clone(),
-            is_fitness_sorted: self.is_fitness_sorted
+            is_fitness_sorted: self.is_fitness_sorted,
         }
     }
 }
@@ -308,6 +342,7 @@ mod test
     use super::*;
     use ::ga::ga_test::*;
     use ::ga::ga_core::*;
+    use ::ga::ga_random::*;
 
     #[test]
     fn test_sort_population()
@@ -339,7 +374,7 @@ mod test
         let mut fact = GATestFactory::new(0.0);
 
         {
-            let mut pop = fact.random_population(10, GAPopulationSortOrder::HighIsBest);
+            let mut pop = fact.random_population(10, GAPopulationSortOrder::HighIsBest, &mut GARandomCtx::new_unseeded("ga_population::test_clone_population".to_string()));
 
             // Upon creation.
             assert_eq!(pop == pop.clone(), true);
@@ -351,7 +386,7 @@ mod test
         }
 
         {
-            let mut pop = fact.random_population(10, GAPopulationSortOrder::LowIsBest);
+            let mut pop = fact.random_population(10, GAPopulationSortOrder::LowIsBest, &mut GARandomCtx::new_unseeded("ga_population::test_clone_population".to_string()));
 
             // Upon creation.
             assert_eq!(pop == pop.clone(), true);

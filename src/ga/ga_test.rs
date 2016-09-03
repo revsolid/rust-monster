@@ -9,6 +9,8 @@ use ::ga::ga_core::*;
 use ::ga::ga_population::*;
 use ::ga::ga_random::*;
 
+use std::any::Any;
+
 #[cfg(test)]
 extern crate env_logger;
 pub const GA_TEST_FITNESS_VAL: f32 = 3.14159;
@@ -60,15 +62,16 @@ impl GATestIndividual
 }
 impl GAIndividual for GATestIndividual 
 {
-    fn evaluate(&mut self) -> f32 { self.fitness }
-    fn crossover(&self, _: &GATestIndividual) -> Box<GATestIndividual>
+    fn crossover(&self, _: &GATestIndividual, _: &mut GARandomCtx) -> Box<GATestIndividual>
     { 
-        Box::new(GATestIndividual::new(self.fitness))
+        Box::new(GATestIndividual::new(self.raw))
     }
-    fn mutate(&mut self, _: f32) {}
+    fn mutate(&mut self, _: f32, _: &mut GARandomCtx) {}
+    fn evaluate(&mut self, _: &mut Any) { /* TODO: Maybe use the context to set the fitness */}
     fn fitness(&self) -> f32 { self.fitness }
-    fn set_fitness(&mut self, fitness:f32) { self.fitness = fitness; }
+    fn set_fitness(&mut self, fitness: f32) { self.fitness = fitness; }
     fn raw(&self) -> f32 { self.raw }
+    fn set_raw(&mut self, raw: f32) { self.raw = raw; }
 }
 
 pub struct GATestFactory
@@ -84,15 +87,9 @@ impl GATestFactory
 }
 impl GAFactory<GATestIndividual> for GATestFactory
 {
-    fn initial_population(&mut self) -> GAPopulation<GATestIndividual>
+    fn random_population(&mut self, n: usize, sort_order: GAPopulationSortOrder,
+                         rng_ctx: &mut GARandomCtx) -> GAPopulation<GATestIndividual>
     {
-        GAPopulation::new(vec![GATestIndividual::new(self.starting_score)], GAPopulationSortOrder::HighIsBest)
-    }
-
-    fn random_population(&mut self, n: usize, sort_order: GAPopulationSortOrder) -> GAPopulation<GATestIndividual>
-    {
-        let mut rng_ctx = GARandomCtx::from_seed([1,2,3,4], String::from("random_population"));
-
         let mut inds: Vec<GATestIndividual> = Vec::new();
 
         for _ in 0..n
