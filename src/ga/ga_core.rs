@@ -45,9 +45,20 @@ pub trait GAIndividual
 /// Genetic Algorithm Individual Factory
 pub trait GAFactory<T: GAIndividual>
 {
-    // Create a population with n randomly initialized individuals
-    fn random_population(&mut self, n: usize, sort_order: GAPopulationSortOrder,
-                         rng_ctx: &mut GARandomCtx) -> GAPopulation<T>;
+    fn initial_population(&mut self) -> GAPopulation<T> 
+    {
+        GAPopulation::new(vec![], GAPopulationSortOrder::HighIsBest)
+    }
+
+    // Create a population with n individuals with random scores.
+    fn random_population(&mut self, n: usize, sort_order: GAPopulationSortOrder, rng_ctx: &mut GARandomCtx) -> GAPopulation<T>;
+
+    // Create a population that is better than the input one.
+    fn better_random_population_than(&mut self, pop: &GAPopulation<T>) -> GAPopulation<T>
+    {
+        // FIXME: So that TSP compiles.
+        GAPopulation::new(vec![], GAPopulationSortOrder::LowIsBest)
+    }
 }
 
 
