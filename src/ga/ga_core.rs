@@ -30,8 +30,8 @@ impl Default for GAFlags
 pub trait GAIndividual
 {
     // Instance
-    fn crossover(&self, other: &Self, rng_ctx: &mut GARandomCtx) -> Box<Self>;
-    fn mutate(&mut self, pMutation: f32, rng_ctx: &mut GARandomCtx);
+    fn crossover(&self, other: &Self, &mut Any) -> Box<Self>;
+    fn mutate(&mut self, pMutation: f32, &mut Any);
     fn evaluate(&mut self, evaluation_ctx: &mut Any);
     // Fitness score
     fn fitness(&self) -> f32;
