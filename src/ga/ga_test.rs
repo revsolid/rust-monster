@@ -62,11 +62,11 @@ impl GATestIndividual
 }
 impl GAIndividual for GATestIndividual 
 {
-    fn crossover(&self, _: &GATestIndividual, _: &mut GARandomCtx) -> Box<GATestIndividual>
+    fn crossover(&self, _: &GATestIndividual, _: &mut Any) -> Box<GATestIndividual>
     { 
         Box::new(GATestIndividual::new(self.raw))
     }
-    fn mutate(&mut self, _: f32, _: &mut GARandomCtx) {}
+    fn mutate(&mut self, _: f32, _: &mut Any) {}
     fn evaluate(&mut self, _: &mut Any) { /* TODO: Maybe use the context to set the fitness */}
     fn fitness(&self) -> f32 { self.fitness }
     fn set_fitness(&mut self, fitness: f32) { self.fitness = fitness; }

@@ -74,62 +74,81 @@ mod tests
     {
         // Crossing over a permutation isn't as simple as one might think
         // algorithm inspired in: http://www.permutationcity.co.uk/projects/mutants/tsp.html
-        fn crossover(&self, other: &TSPIndividual, rng_ctx: &mut GARandomCtx) -> Box<TSPIndividual>
+        fn crossover(&self, other: &TSPIndividual, ctx: &mut Any) -> Box<TSPIndividual>
         {
-
-            let to_pick = min(self.inxes.len(), 3);
-            let mut new_inxes = vec![];
-
-            // Copy the first parent
-            for i in 0..self.inxes.len()
+            match ctx.downcast_mut::<GARandomCtx>()
             {
-                new_inxes.push(self.inxes[i]);
-            }
-
-            let mut picked = vec![]; //This are indexes
-            for _ in 0..to_pick
-            {
-                picked.push(rng_ctx.gen_range(0, self.inxes.len()));
-            }
-
-            let mut places: [usize; 3] = [0, 0, 0];
-            for pi in 0..picked.len()
-            {
-                for oi in 0..other.inxes.len()
+                Some(rng_ctx) =>
                 {
-                    if self.inxes[picked[pi]] == other.inxes[oi]
+                    let to_pick = min(self.inxes.len(), 3);
+                    let mut new_inxes = vec![];
+        
+                    // Copy the first parent
+                    for i in 0..self.inxes.len()
                     {
-                        places[pi] = oi;
-                        break;
+                        new_inxes.push(self.inxes[i]);
                     }
+        
+                    let mut picked = vec![]; //This are indexes
+                    for _ in 0..to_pick
+                    {
+                        picked.push(rng_ctx.gen_range(0, self.inxes.len()));
+                    }
+        
+                    let mut places: [usize; 3] = [0, 0, 0];
+                    for pi in 0..picked.len()
+                    {
+                        for oi in 0..other.inxes.len()
+                        {
+                            if self.inxes[picked[pi]] == other.inxes[oi]
+                            {
+                                places[pi] = oi;
+                                break;
+                            }
+                        }
+                    }
+        
+                    for pi in 0..picked.len()
+                    {
+                        let temp = new_inxes[picked[pi]];
+                        new_inxes[picked[pi]] = new_inxes[places[pi]];
+                        new_inxes[places[pi]] = temp;
+                    }
+        
+                    Box::new(TSPIndividual::new_from_inxes(new_inxes))
+                },
+                None =>
+                {
+                    panic!("Incorrect type passed for context");
                 }
             }
-
-            for pi in 0..picked.len()
-            {
-                let temp = new_inxes[picked[pi]];
-                new_inxes[picked[pi]] = new_inxes[places[pi]];
-                new_inxes[places[pi]] = temp;
-            }
-
-            Box::new(TSPIndividual::new_from_inxes(new_inxes))
         }
 
-        fn mutate(&mut self, probability: f32, rng: &mut GARandomCtx)
+        fn mutate(&mut self, probability: f32, ctx: &mut Any)
         {
-            if rng.test_value(probability)
+            match ctx.downcast_mut::<GARandomCtx>()
             {
-                let p1 = rng.gen_range(0, self.inxes.len());
-                let mut p2 = p1;
-
-                while p1 == p2
+                Some(rng) =>
                 {
-                    p2 = rng.gen_range(0, self.inxes.len());
+                    if rng.test_value(probability)
+                    {
+                        let p1 = rng.gen_range(0, self.inxes.len());
+                        let mut p2 = p1;
+        
+                        while p1 == p2
+                        {
+                            p2 = rng.gen_range(0, self.inxes.len());
+                        }
+        
+                        let tmp = self.inxes[p1];
+                        self.inxes[p1] = self.inxes[p2];
+                        self.inxes[p2] = tmp;
+                    }
+                },
+                None =>
+                {
+                    panic!("Incorrect context");
                 }
-
-                let tmp = self.inxes[p1];
-                self.inxes[p1] = self.inxes[p2];
-                self.inxes[p2] = tmp;
             }
         }
 
