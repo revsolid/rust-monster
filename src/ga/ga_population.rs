@@ -179,6 +179,58 @@ impl<T: GAIndividual> GAPopulation<T>
         self.individual(self.size()-1, GAPopulationSortBasis::Fitness)
     }
 
+    // NOTE:
+    // This function could get better. This implementation suffices but it is a bit janky.
+    // The idea is to get the N best individuals out of the population, but due to our sorting
+    // scheme is a bit hard to do it.
+    // There are other options, including refactoring our iterators to allow for mutable iterators
+    // (or something like 'into_iter()' that implies the population will be 'destroyed', which
+    // would be ideal for 'stepping' the Genetic Algorithm.
+    // -S.
+    pub fn drain_best_individuals(&mut self, k_best: usize, sort_basis: GAPopulationSortBasis) -> Vec<T>
+    {
+        // Draining Individuals from the population isn't trivial because the individuals list isn't
+        // ordered.
+        //
+        // The idea is:
+        //   Find the indices we want to drain (The first n from the order list)
+        //   Order those indices (To make draining from the individuals list possible)
+        //   Traverse the ordered indices list and drain.
+
+        let mut inds_to_return: Vec<usize>;
+
+        {
+            let mut order_vec = match sort_basis
+            {
+                GAPopulationSortBasis::Raw =>
+                {
+                    &mut self.population_order_raw
+                },
+
+                GAPopulationSortBasis::Fitness =>
+                {
+                    &mut self.population_order_fitness
+                }
+            };
+
+            inds_to_return = order_vec.drain(0..k_best).collect();
+            inds_to_return.sort();
+        }
+
+        let mut drained = vec![];
+        for (i, d_i) in inds_to_return.iter().enumerate()
+        {
+            let inx = d_i - i;
+            drained.append(&mut self.population.drain(inx..inx+1).collect());
+        }
+
+        self.is_raw_sorted = false;
+        self.is_fitness_sorted = false;
+        self.population_order_raw.clear();
+        self.population_order_fitness.clear();
+        drained
+    }
+
     pub fn individual(&self, i : usize, sort_basis : GAPopulationSortBasis) -> &T
     {
         // TODO: Check that i makes sense
@@ -722,6 +774,35 @@ mod test
             let it = pop.fitness_score_iterator();
             let actual_seq: Vec<f32> = it.map(|ind| { ind.fitness() }).collect();
             assert_eq!(expected_seq, actual_seq);
+        }
+        ga_test_teardown();
+    }
+
+    #[test]
+    fn test_population_drain()
+    {
+        ga_test_setup("ga_population::test_population_drain");
+
+        // Iteration of a HighIsBest population yields a sequence of non-decreasing fitness scores (when fitness = 1/raw).
+
+        let mut expected_seq: Vec<f32> = (1..8).map(|rs| 1.0/(rs as f32)).collect();
+        {
+            let mut inds: Vec<GATestIndividual> = Vec::new();
+            for rs in 2..10
+            {
+                inds.push(GATestIndividual::new(rs as f32));
+            }
+            inds.push(GATestIndividual::new(1 as f32));
+            let mut pop = GAPopulation::new(inds, GAPopulationSortOrder::HighIsBest);
+            pop.sort();
+
+            let mut actual_seq: Vec<f32> = pop.drain_best_individuals(7, GAPopulationSortBasis::Fitness).iter().map(|ind| {ind.fitness()}).collect();
+            actual_seq.sort_by(|a, b| b.partial_cmp(a).unwrap());
+            assert_eq!(expected_seq, actual_seq);
+            pop.sort();
+            let it = pop.fitness_score_iterator();
+            let rest: Vec<f32> = it.map(|ind| { ind.fitness() }).collect();
+            assert_eq!(vec![1.0/8.0, 1.0/9.0], rest);
         }
         ga_test_teardown();
     }
